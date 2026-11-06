@@ -73,6 +73,7 @@ model User {
   role          UserRole  @default(CLIENT)
   avatar        String?
   passwordHash  String?
+  emailVerifiedAt DateTime?
   isActive      Boolean   @default(true)
   cityId        String?
   createdAt     DateTime  @default(now())
@@ -83,6 +84,7 @@ model User {
   reviews       Review[]
   vendorProfile Vendor?
   sessions      AuthSession[]
+  accountTokens AccountToken[]
   channelSettings ChannelSetting[]
   invitationTemplates InvitationTemplate[]
 
@@ -144,6 +146,9 @@ model GeoRule {
   @@unique([cityId, serviceId])
   @@unique([cityId, categoryId])
   @@index([cityId, status])
+  @@index([featureId], map: "GeoRule_featureId_idx")
+  @@index([serviceId], map: "GeoRule_serviceId_idx")
+  @@index([categoryId], map: "GeoRule_categoryId_idx")
 }
 model GeoPolicy {
   id String @id @default("default")
@@ -232,6 +237,8 @@ model SaudiCity {
   @@index([isAvailable])
   availabilityRules AvailabilityGeoRule[]
   availabilityInterests AvailabilityInterest[]
+  @@index([countryCode], map: "SaudiCity_countryCode_idx")
+  @@index([regionId], map: "SaudiCity_regionId_idx")
 }
 
 model ServiceCategory {
@@ -390,6 +397,7 @@ model ServiceItem {
   @@index([categoryId])
   @@index([price])
   CommerceService_sourceId CommerceService? @relation("CommerceService_sourceId")
+  @@index([artistId], map: "ServiceItem_artistId_idx")
 }
 
 model ServicePackage {
@@ -478,6 +486,7 @@ model Occasion {
 
   @@index([cityId])
   @@index([date])
+  @@index([userId], map: "Occasion_userId_idx")
 }
 
 model Guest {
@@ -545,6 +554,21 @@ model SystemSetupToken {
   consumedAt DateTime?
   createdAt DateTime @default(now())
   @@index([email])
+  @@index([expiresAt])
+}
+
+/// One-time links for password reset and e-mail verification. Only the SHA-256 of the token is stored.
+model AccountToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purpose   String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, purpose])
   @@index([expiresAt])
 }
 
@@ -696,6 +720,8 @@ model MultiVendorOrder {
   @@index([createdAt])
   @@index([omsStatus])
   @@index([customerId, createdAt])
+  @@index([occasionId], map: "MultiVendorOrder_occasionId_idx")
+  @@index([cityId], map: "MultiVendorOrder_cityId_idx")
 }
 
 model Suborder {
@@ -883,6 +909,7 @@ model OMSNotificationLog {
 
   @@index([suborderId])
   @@index([status])
+  @@index([orderId], map: "OMSNotificationLog_orderId_idx")
 }
 
 // -------------------------------------------------------------
@@ -925,6 +952,7 @@ model Review {
   @@index([featured])
   @@index([commerceServiceId])
   @@unique([userId, commerceItemId])
+  @@index([serviceId], map: "Review_serviceId_idx")
 }
 
 // -------------------------------------------------------------
@@ -1168,6 +1196,9 @@ model CommerceOrderItem {
   packageIdRelation CommercePackage? @relation("CommerceOrderItem_packageId", fields: [packageId], references: [id], onDelete: Restrict)
   CommerceBooking_orderItemId CommerceBooking? @relation("CommerceBooking_orderItemId")
   @@index([orderId])
+  @@index([serviceId], map: "CommerceOrderItem_serviceId_idx")
+  @@index([offerId], map: "CommerceOrderItem_offerId_idx")
+  @@index([packageId], map: "CommerceOrderItem_packageId_idx")
 }
 
 model CommerceFulfillmentGroup {
@@ -1208,6 +1239,8 @@ model CommerceTransfer {
   @@index([orderId])
   makerIdReference User @relation("CommerceTransfer_makerId", fields: [makerId], references: [id], onDelete: Restrict)
   checkerIdReference User? @relation("CommerceTransfer_checkerId", fields: [checkerId], references: [id], onDelete: Restrict)
+  @@index([makerId], map: "CommerceTransfer_makerId_idx")
+  @@index([checkerId], map: "CommerceTransfer_checkerId_idx")
 }
 
 model CommerceRelationship {
@@ -1220,6 +1253,7 @@ model CommerceRelationship {
   @@unique([serviceId,relatedServiceId,kind])
   serviceIdReference CommerceService @relation("CommerceRelationship_serviceId", fields: [serviceId], references: [id], onDelete: Restrict)
   relatedServiceIdReference CommerceService @relation("CommerceRelationship_relatedServiceId", fields: [relatedServiceId], references: [id], onDelete: Restrict)
+  @@index([relatedServiceId], map: "CommerceRelationship_relatedServiceId_idx")
 }
 
 model OccasionFloorPlan {
@@ -1279,6 +1313,8 @@ model AvailabilityGeoRule {
   updatedAt DateTime @default(now()) @db.Timestamptz(3)
   @@index([policyId])
   @@index([cityId])
+  @@index([countryCode], map: "AvailabilityGeoRule_countryCode_idx")
+  @@index([regionId], map: "AvailabilityGeoRule_regionId_idx")
 }
 model AvailabilitySchedule {
   id String @id @default(uuid())
@@ -1324,6 +1360,8 @@ model AvailabilityInterest {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   @@unique([serviceId, cityId, customerId])
   @@index([serviceId, cityId, status])
+  @@index([cityId], map: "AvailabilityInterest_cityId_idx")
+  @@index([customerId], map: "AvailabilityInterest_customerId_idx")
 }
 model PublicStatsConfig {
   id String @id @default("default")

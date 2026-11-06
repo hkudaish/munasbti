@@ -1,4 +1,5 @@
 import { api, HttpError } from '@/lib/server/http';
+import { clientIp } from '@/lib/server/auth';
 import { resolve } from '@/lib/availability/resolver';
 import { prisma } from '@/lib/db';
 import { loadSnapshot } from '@/lib/server/availability/loader';
@@ -10,7 +11,7 @@ export const dynamic = 'force-dynamic';
 // A soft per-address limit (per server instance) so the endpoint cannot be used to hammer the database.
 const hits = new Map<string, { n: number; reset: number }>();
 function limit(request: Request) {
-  const key = (request.headers.get('x-forwarded-for') || request.headers.get('x-nf-client-connection-ip') || 'local').split(',')[0].trim();
+  const key = clientIp(request);
   const now = Date.now(), entry = hits.get(key);
   if (!entry || entry.reset < now) { hits.set(key, { n: 1, reset: now + 60_000 }); if (hits.size > 5000) hits.clear(); return; }
   if (++entry.n > 120) throw new HttpError(429, 'طلبات كثيرة؛ حاول بعد قليل');

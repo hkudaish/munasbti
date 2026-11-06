@@ -633,6 +633,7 @@ export interface UserProfile {
 }
 
 export interface CustomerRegistrationPayload {
+  captchaToken?: string;
   name: string;
   phone: string;
   email?: string;
@@ -643,6 +644,7 @@ export interface CustomerRegistrationPayload {
 }
 
 export interface VendorRegistrationPayload {
+  captchaToken?: string;
   businessName: string;
   businessNameEn?: string;
   categoryId: string;

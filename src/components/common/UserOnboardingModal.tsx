@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import Turnstile, { captchaConfigured } from '@/components/common/Turnstile';
 import PasswordInput from '@/components/common/PasswordInput';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/store';
@@ -91,6 +92,9 @@ export default function UserOnboardingModal() {
   // Login Form Data
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [captchaToken, setCaptchaToken] = useState(''), [captchaNeeded, setCaptchaNeeded] = useState(false), [captchaRound, setCaptchaRound] = useState(0);
+  const onCaptcha = useCallback((token: string) => setCaptchaToken(token), []);
+  const freshCaptcha = () => { setCaptchaToken(''); setCaptchaRound(n => n + 1); };   // a token works once
   // Accounts with an authenticator app are asked for a code after the password is accepted.
   const [mfaStep, setMfaStep] = useState(false);
   const [loginCode, setLoginCode] = useState('');
@@ -152,10 +156,12 @@ export default function UserOnboardingModal() {
       upcomingOccasionType: customerData.upcomingOccasionType,
       occasionDate: customerData.occasionDate,
       password: customerData.password,
+      captchaToken,
     });
 
     setIsSubmitting(false);
     if (!res.success) {
+      freshCaptcha();
       setErrorMessage(res.error || tr('حدث خطأ أثناء التسجيل'));
       return;
     }
@@ -179,6 +185,7 @@ export default function UserOnboardingModal() {
 
     setIsSubmitting(true);
     const res = await registerVendor({
+      captchaToken,
       businessName: vendorData.businessName,
       businessNameEn: vendorData.businessNameEn,
       categoryId: vendorData.categoryId,
@@ -197,6 +204,7 @@ export default function UserOnboardingModal() {
 
     setIsSubmitting(false);
     if (!res.success) {
+      freshCaptcha();
       setErrorMessage(res.error || tr('حدث خطأ أثناء تسجيل المورد'));
       return;
     }
@@ -213,8 +221,10 @@ export default function UserOnboardingModal() {
   const handleLoginSubmit = async (identifier: string, requestedRole?: 'client' | 'vendor' | 'admin') => {
     setErrorMessage('');
     setIsSubmitting(true);
-    const res = await loginUser(identifier, requestedRole, loginPassword, mfaStep ? loginCode : undefined);
+    const res = await loginUser(identifier, requestedRole, loginPassword, mfaStep ? loginCode : undefined, captchaNeeded ? captchaToken : undefined);
     setIsSubmitting(false);
+    if (captchaNeeded) freshCaptcha();
+    if (res.captchaRequired) setCaptchaNeeded(true);
 
     if (res.mfaRequired) { setMfaStep(true); setLoginCode(''); setErrorMessage(''); return; }
     if (!res.success) {
@@ -556,10 +566,11 @@ export default function UserOnboardingModal() {
                 </div>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-2 space-y-3">
+                {captchaConfigured && <Turnstile key={captchaRound} onToken={onCaptcha} />}
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || (captchaConfigured && !captchaToken)}
                   className="w-full py-3.5 px-4 rounded-xl bg-saudi-green-800 hover:bg-saudi-green-900 text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
@@ -720,11 +731,12 @@ export default function UserOnboardingModal() {
                 </div>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-2 space-y-3">
                 <label className="block text-xs font-bold">{tr('كلمة المرور (12 حرفاً على الأقل)')}<PasswordInput required minLength={12} maxLength={128} autoComplete="new-password" value={vendorData.password} onChange={e => setVendorData({ ...vendorData, password: e.target.value })} className="w-full rounded-xl border p-3 mt-1" /></label>
+                {captchaConfigured && <Turnstile key={captchaRound} onToken={onCaptcha} />}
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || (captchaConfigured && !captchaToken)}
                   className="w-full py-3.5 px-4 rounded-xl bg-saudi-gold-500 hover:bg-saudi-gold-600 text-saudi-green-950 font-bold text-sm shadow-md transition flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
@@ -814,9 +826,11 @@ export default function UserOnboardingModal() {
                   </div>
                 )}
 
+                {captchaNeeded && <Turnstile key={captchaRound} onToken={onCaptcha} />}
+                <p className="text-center text-sm"><a href="/forgot-password" className="font-bold text-saudi-green-800 underline underline-offset-2">{tr('نسيت كلمة المرور؟')}</a></p>
                 <button
                   type="submit"
-                  disabled={isSubmitting || lockSeconds > 0}
+                  disabled={isSubmitting || lockSeconds > 0 || (captchaNeeded && !captchaToken)}
                   className="w-full py-3.5 px-4 rounded-xl bg-saudi-green-800 hover:bg-saudi-green-900 disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed text-white font-bold text-base transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-saudi-green-800"
                 >
                   {lockSeconds > 0

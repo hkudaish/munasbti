@@ -94,7 +94,7 @@ interface AppContextType {
   setOnboardingGate: (gate: { returnTo?: string } | null) => void;
   registerCustomer: (payload: CustomerRegistrationPayload) => Promise<{ success: boolean; user?: UserProfile; error?: string }>;
   registerVendor: (payload: VendorRegistrationPayload) => Promise<{ success: boolean; user?: UserProfile; error?: string }>;
-  loginUser: (identifier: string, requestedRole?: UserRole, password?: string, code?: string) => Promise<{ success: boolean; user?: UserProfile; error?: string; retryAfter?: number; mfaRequired?: boolean }>;
+  loginUser: (identifier: string, requestedRole?: UserRole, password?: string, code?: string, captchaToken?: string) => Promise<{ success: boolean; user?: UserProfile; error?: string; retryAfter?: number; mfaRequired?: boolean; captchaRequired?: boolean }>;
   logoutUser: () => void;
   /** True once the server has answered whether anyone is signed in (safe to guard protected pages). */
   authReady: boolean;
@@ -535,7 +535,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userType: 'client', customerData: payload }),
+        body: JSON.stringify({ userType: 'client', customerData: payload, captchaToken: payload.captchaToken }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -575,7 +575,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userType: 'vendor', vendorData: payload }),
+        body: JSON.stringify({ userType: 'vendor', vendorData: payload, captchaToken: payload.captchaToken }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -611,17 +611,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const loginUser = async (identifier: string, requestedRole?: UserRole, password?: string, code?: string) => {
+  const loginUser = async (identifier: string, requestedRole?: UserRole, password?: string, code?: string, captchaToken?: string) => {
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, password, code }),
+        body: JSON.stringify({ identifier, password, code, captchaToken }),
       });
       const data = await res.json();
       if (data.mfaRequired) return { success: false, mfaRequired: true };
       if (!res.ok || !data.success) {
-        throw Object.assign(new Error(data.error || 'فشل تسجيل الدخول'), { retryAfter: typeof data.retryAfter === 'number' ? data.retryAfter : undefined });
+        throw Object.assign(new Error(data.error || 'فشل تسجيل الدخول'), { retryAfter: typeof data.retryAfter === 'number' ? data.retryAfter : undefined, captchaRequired: data.captchaRequired === true });
       }
 
       const cityObj = cities.find((c) => c.id === data.user.cityId);
@@ -639,7 +639,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       return { success: true, user: userProfile };
     } catch (err: any) {
-      return { success: false, error: err.message || 'حدث خطأ أثناء تسجيل الدخول', retryAfter: err.retryAfter };
+      return { success: false, error: err.message || 'حدث خطأ أثناء تسجيل الدخول', retryAfter: err.retryAfter, captchaRequired: err.captchaRequired === true };
     }
   };
 

@@ -17,7 +17,8 @@ function databaseClient() {
   let connection = databaseConnectionUrl();
   if (connection) {
     const url = new URL(connection);
-    if (!url.searchParams.has('connection_limit')) url.searchParams.set('connection_limit', '2');
+    // 2 suits Netlify's short-lived functions; one long-running Node process (Hostinger, VPS) should set DB_CONNECTION_LIMIT (about 10).
+    if (!url.searchParams.has('connection_limit')) url.searchParams.set('connection_limit', process.env.DB_CONNECTION_LIMIT || '2');
     if (!url.searchParams.has('pool_timeout')) url.searchParams.set('pool_timeout', '20');
     connection = url.toString();
   }

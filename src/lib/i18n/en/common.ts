@@ -404,6 +404,7 @@ export const EN_COMMON: Record<string, string> = {
   "05XXXXXXXX أو البريد الإلكتروني": "05XXXXXXXX or email",
   "كلمة المرور": "Password",
   "جاري التحقق...": "Verifying...",
+  "نسيت كلمة المرور؟": "Forgot your password?",
   "مرحباً بك،": "Welcome,",
   "تم تفعيل حساب المورد وحفظ هويتك في قاعدة البيانات بنجاح. تم توجيهك إلى بوابة الموردين لإدارة الخدمات والطلبات.": "The vendor account is activated and your identity was saved successfully. You were taken to the vendor portal to manage services and orders.",
   "تم تسجيل الدخول بصلاحيات الإدارة والتحكم الكاملة.": "Signed in with full administration and control permissions.",

@@ -37,10 +37,21 @@ export async function sessionUser() {
 export async function requireUser() { const user = await sessionUser(); if (!user) throw new HttpError(401, 'يرجى تسجيل الدخول'); return user; }
 export async function logout() { const token = (await cookies()).get(COOKIE)?.value; if (token) await prisma.authSession.deleteMany({ where: { tokenHash: digest(token) } }); (await cookies()).delete(COOKIE); }
 export function profile(user: any) {
-  return { id: user.id, name: user.name, phone: user.phone, email: user.email, cityId: user.cityId, createdAt: user.createdAt, avatar: user.avatar, role: ['ADMIN','SUPER_ADMIN'].includes(user.role) ? 'admin' : user.role === 'VENDOR' ? 'vendor' : 'client', hasSystemAccess: user.role === 'SUPER_ADMIN', hasAdminAccess: ['ADMIN','SUPER_ADMIN'].includes(user.role), vendorId: user.vendorProfile?.id, businessName: user.vendorProfile?.businessName };
+  return { id: user.id, name: user.name, phone: user.phone, email: user.email, emailVerified: !!user.emailVerifiedAt, cityId: user.cityId, createdAt: user.createdAt, avatar: user.avatar, role: ['ADMIN','SUPER_ADMIN'].includes(user.role) ? 'admin' : user.role === 'VENDOR' ? 'vendor' : 'client', hasSystemAccess: user.role === 'SUPER_ADMIN', hasAdminAccess: ['ADMIN','SUPER_ADMIN'].includes(user.role), vendorId: user.vendorProfile?.id, businessName: user.vendorProfile?.businessName };
 }
-/** The visitor's address as the host reports it: Netlify's own header cannot be set by the client, the forwarded list is the fallback. */
-export function clientIp(request: Request) { return request.headers.get('x-nf-client-connection-ip') || request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'local'; }
+/**
+ * The visitor's address, read only from a header the hosting layer controls:
+ *  - on Netlify (NETLIFY is set at runtime) its own header, which the client cannot set;
+ *  - anywhere else (Hostinger behind LiteSpeed/Nginx, a VPS) the entry of X-Forwarded-For that the LAST trusted proxy appended, counted from the right.
+ *    The leftmost entries are written by the client, so trusting them would let anyone rotate addresses to dodge every per-address limit.
+ *    TRUSTED_PROXY_HOPS is the number of proxies in front of the app (default 1); 0 means no proxy, so no forwarded header is trusted.
+ */
+export function clientIp(request: Request) {
+  if (process.env.NETLIFY) { const nf = request.headers.get('x-nf-client-connection-ip'); if (nf) return nf; }
+  const hops = Math.max(0, Number.parseInt(process.env.TRUSTED_PROXY_HOPS ?? '1', 10) || 0);
+  const list = hops > 0 ? (request.headers.get('x-forwarded-for') ?? '').split(',').map(part => part.trim()).filter(Boolean) : [];
+  return list.length ? list[Math.max(0, list.length - hops)] : 'local';
+}
 export async function rateLimit(key: string, limit = 20, windowMs = 900000) {
   const hashed = digest(key); const now = new Date();
   await prisma.authAttempt.deleteMany({ where: { key: hashed, expiresAt: { lte: now } } });
@@ -51,10 +62,10 @@ export async function rateLimit(key: string, limit = 20, windowMs = 900000) {
 const FAIL_PAIR_LIMIT = 5, FAIL_ACCOUNT_LIMIT = 20, FAIL_WINDOW = 900000, FAIL_ACCOUNT_WINDOW = 3600000, LOCK_BASE = 900000, LOCK_MAX = 86400000;
 const failKeys = (ip: string, identifier: string) => ({ pair: digest(`fail:${ip}:${identifier}`), account: digest(`fail-id:${identifier}`), tier: digest(`lock-tier:${identifier}`) });
 /** Refuses a sign-in while the device or the account is locked after repeated wrong passwords. Checking never counts as an attempt, so a locked-out attacker cannot extend a victim's lock. */
-export async function assertLoginAllowed(ip: string, identifier: string) {
+export async function assertLoginAllowed(ip: string, identifier: string, options: { ignoreAccountLock?: boolean } = {}) {
   const k = failKeys(ip, identifier); const now = new Date();
   const rows = await prisma.authAttempt.findMany({ where: { key: { in: [k.pair, k.account] }, expiresAt: { gt: now } } });
-  const locked = rows.filter(r => r.count >= (r.key === k.pair ? FAIL_PAIR_LIMIT : FAIL_ACCOUNT_LIMIT)).sort((a, b) => b.expiresAt.getTime() - a.expiresAt.getTime())[0];
+  const locked = rows.filter(r => (r.key === k.pair || !options.ignoreAccountLock) && r.count >= (r.key === k.pair ? FAIL_PAIR_LIMIT : FAIL_ACCOUNT_LIMIT)).sort((a, b) => b.expiresAt.getTime() - a.expiresAt.getTime())[0];
   if (locked) {
     const retryAfter = Math.max(1, Math.ceil((locked.expiresAt.getTime() - now.getTime()) / 1000)), minutes = Math.ceil(retryAfter / 60);
     throw new HttpError(429, `تم إيقاف تسجيل الدخول مؤقتاً بعد محاولات خاطئة متكررة. حاول بعد ${minutes >= 120 ? Math.ceil(minutes / 60) + ' ساعات' : minutes + ' دقيقة'}`, { retryAfter });
@@ -78,3 +89,15 @@ export async function clearLoginFailures(ip: string, identifier: string) { await
 
 export async function requireSystemAdmin() { const user = await requireUser(); if (user.role !== 'SUPER_ADMIN') throw new HttpError(403, 'هذه الصلاحية مخصصة لمدير النظام'); return user; }
 export async function requireAdmin() { const user = await requireUser(); if (!['ADMIN','SUPER_ADMIN'].includes(user.role)) throw new HttpError(403, 'هذه الصلاحية مخصصة للإدارة'); return user; }
+
+/** After a few wrong passwords from this device (or many across the account) the sign-in form must carry a CAPTCHA token. */
+export async function loginNeedsCaptcha(ip: string, identifier: string) {
+  const k = failKeys(ip, identifier);
+  const rows = await prisma.authAttempt.findMany({ where: { key: { in: [k.pair, k.account] }, expiresAt: { gt: new Date() } } });
+  return rows.some(r => r.count >= (r.key === k.pair ? 3 : 10));
+}
+/** A password reset proves the owner controls the e-mail address, so it also lifts the account-wide lock left by earlier wrong guesses. */
+export async function clearAccountLock(identifiers: (string | null | undefined)[]) {
+  const keys = identifiers.filter((v): v is string => !!v).flatMap(id => { const k = failKeys('', id.toLowerCase()); return [k.account, k.tier]; });
+  if (keys.length) await prisma.authAttempt.deleteMany({ where: { key: { in: keys } } });
+}

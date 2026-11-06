@@ -72,3 +72,11 @@ next-env.d.ts
 scripts/.i18n-report.json
 scripts/.i18n-scan.json
 .taste-skill/
+
+# server secrets and local audit/test artifacts
+.env.production
+/.next-*/
+.overflow-browser-*/
+.pricing-browser-*/
+.*-tsconfig-*.json
+.taste-session.cjs

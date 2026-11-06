@@ -108,3 +108,13 @@ export async function registerLegacyService(tx:Tx,s:any,vendor:any){
  await tx.$executeRaw`INSERT INTO "CommerceService" ("id","sourceId","ownerId","vendorId","body") VALUES (${s.id},${s.id},${vendor.userId},${vendor.id},${JSON.stringify(body)}::jsonb) ON CONFLICT ("id") DO UPDATE SET "body"=EXCLUDED."body","version"="CommerceService"."version"+1,"updatedAt"=CURRENT_TIMESTAMP`;
  for(const o of await tx.$queryRaw<any[]>`SELECT * FROM "CommerceOffer" WHERE "serviceId"=${s.id}`)await syncOffer(tx,o,await serviceRow(tx,s.id));
 }
+
+// The public catalog is the same for every visitor (no user or session data) but costs several queries per offer, so it is built at most once per
+// window and concurrent requests share the build. Changes by vendors or administrators show within CATALOG_CACHE_MS; cart and checkout never read this copy.
+const CATALOG_CACHE_MS = Number(process.env.CATALOG_CACHE_MS ?? 15000);
+let publicCopy: { at: number; value: Awaited<ReturnType<typeof catalog>> } | null = null, publicBuild: Promise<Awaited<ReturnType<typeof catalog>>> | null = null;
+export async function publicCatalogCached() {
+  if (publicCopy && Date.now() - publicCopy.at < CATALOG_CACHE_MS) return publicCopy.value;
+  publicBuild ??= catalog().then(value => { publicCopy = { at: Date.now(), value }; return value; }).finally(() => { publicBuild = null; });
+  return publicBuild;
+}

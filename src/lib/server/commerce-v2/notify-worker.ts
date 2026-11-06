@@ -212,5 +212,8 @@ export async function runCron() {
   const jobs = await runNotificationJobs();
   // exception requests: expiring offers, escalations and queued messages (a failure here must not stop the jobs above from reporting)
   const exceptions = await import('../exceptions/sweep').then(m => m.sweepExceptions()).catch(e => ({ error: e instanceof Error ? e.message : 'failed' }));
-  return { schedules, releasedRedemptions: released, prices, expiredDrafts: Number(expired), reminders, ops, outbox, jobs, exceptions };
+  // retention: rate-limit counters and sessions are useless once expired, and nothing else deletes them (they grow with every visitor)
+  const purged = await Promise.all([prisma.authAttempt.deleteMany({ where: { expiresAt: { lte: new Date() } } }), prisma.authSession.deleteMany({ where: { expiresAt: { lte: new Date() } } }), prisma.accountToken.deleteMany({ where: { expiresAt: { lte: new Date(Date.now() - 86400000) } } })])
+    .then(([attempts, sessions, tokens]) => ({ attempts: attempts.count, sessions: sessions.count, tokens: tokens.count })).catch(() => ({ attempts: 0, sessions: 0, tokens: 0 }));
+  return { schedules, releasedRedemptions: released, prices, expiredDrafts: Number(expired), reminders, ops, outbox, jobs, exceptions, purged };
 }

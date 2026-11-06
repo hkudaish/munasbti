@@ -30,6 +30,7 @@
     "test:overflow": "node scripts/test-overflow-browser.cjs",
     "test:login-lockout": "node scripts/test-login-lockout.cjs",
     "test:totp": "node scripts/test-totp.cjs",
+    "test:account-security": "node scripts/test-account-security.cjs",
     "test:demo-data": "node scripts/test-demo-data.cjs",
     "test:backup": "node scripts/test-backup.cjs",
     "test:backup-admin": "node scripts/test-backup-admin.cjs",
@@ -54,7 +55,12 @@
     "test:booking-engine": "node scripts/test-booking-engine.cjs",
     "test:configurable-bookings": "node scripts/test-configurable-bookings.cjs",
     "test:service-commerce": "node scripts/test-service-commerce.cjs",
-    "test:service-commerce-rules": "node scripts/test-service-commerce-rules.cjs"
+    "test:service-commerce-rules": "node scripts/test-service-commerce-rules.cjs",
+    "build:hostinger": "node scripts/hostinger/build.cjs",
+    "start:hostinger": "node .next/standalone/server.js",
+    "db:migrate": "node scripts/migrate.cjs",
+    "db:migrate-status": "node scripts/migrate.cjs --status",
+    "db:seed-base": "node scripts/seed-base.cjs"
   },
   "dependencies": {
     "@netlify/blobs": "^10.7.13",
@@ -64,6 +70,8 @@
     "clsx": "^2.1.1",
     "lucide-react": "^0.469.0",
     "next": "^15.5.28",
+    "nodemailer": "^10.3.1",
+    "pg": "^8.23.1",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -73,6 +81,8 @@
     "@netlify/plugin-nextjs": "^5.16.2",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20.17.10",
+    "@types/nodemailer": "^8.0.2",
+    "@types/pg": "^8.23.1",
     "@types/qrcode": "^1.5.5",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
@@ -88,6 +98,10 @@
   "overrides": {
     "next": {
       "postcss": "$postcss"
-    }
+    },
+    "deepmerge-ts": "^8.0.2"
+  },
+  "engines": {
+    "node": ">=20.9.0 <23"
   }
 }
