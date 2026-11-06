@@ -4,7 +4,7 @@
 
 ## متطلبات النسخة الحالية
 
-المستودع المرتبط هو `hkudaish/munasabati-app` والفرع الإنتاجي `main`، والموقع المرتبط `https://munasabit.netlify.app`.
+المستودع المرتبط هو `hkudaish/munasbti` والفرع الإنتاجي `main`، والموقع المرتبط `https://munasabit.netlify.app`.
 
 قبل النشر اضبط المتغيرات في Netlify مع إتاحتها للبناء والدوال:
 
@@ -33,14 +33,14 @@
 
 ### الخيار الأول: الربط التلقائي عبر GitHub / GitLab (الموصى به) ⭐
 
-1. قم بإنشاء مستودع جديد على **GitHub** (مثلاً: `munasabati-app`).
+1. قم بإنشاء مستودع جديد على **GitHub** (مثلاً: `munasbti`).
 2. ارفع ملفات المشروع:
    ```bash
    git init
    git add .
    git commit -m "Initial commit: Munasabati Saudi Events Platform"
    git branch -M main
-   git remote add origin https://github.com/YOUR_USERNAME/munasabati-app.git
+   git remote add origin https://github.com/YOUR_USERNAME/munasbti.git
    git push -u origin main
    ```
 3. توجه إلى [لوحة تحكم Netlify](https://app.netlify.com).
