@@ -1,11 +1,11 @@
 import type { Locale } from '@/lib/i18n/locale';
 
 export interface PageMeta { title: Record<Locale, string>; description: Record<Locale, string>; keywords?: string[] }
-const SUFFIX: Record<Locale, string> = { ar: ' | مناسبتـي', en: ' | Munasabati' };
+const SUFFIX: Record<Locale, string> = { ar: ' | مناسبتـي', en: ' | Munasbti' };
 const page = (ar: [string, string], en: [string, string]): PageMeta => ({ title: { ar: ar[0] + SUFFIX.ar, en: en[0] + SUFFIX.en }, description: { ar: ar[1], en: en[1] } });
 
 export const HOME: PageMeta = {
-  title: { ar: 'مناسبتـي | منصة التخطيط الذكي وحجز المناسبات والاحتفالات السعودية', en: 'Munasabati | Smart event planning and booking in Saudi Arabia' },
+  title: { ar: 'مناسبتـي | منصة التخطيط الذكي وحجز المناسبات والاحتفالات السعودية', en: 'Munasbti | Smart event planning and booking in Saudi Arabia' },
   description: { ar: 'خططها. احجزها. اعزمهم. احتفل. المنصة السعودية الأولى لتنظيم وحجز كافة خدمات وباقات المناسبات والأعراس والتخرج بالذكاء الاصطناعي.', en: 'Plan it. Book it. Invite them. Celebrate. Saudi Arabia’s smart platform to plan and book weddings, engagements, graduations and every celebration: halls, kosha, hospitality, photography and ready-made packages.' },
   keywords: ['مناسبتي', 'تخطيط مناسبات', 'كوشة بالرياض', 'ضيافة سعودية', 'قهوجيين', 'حفلات تخرج', 'زواج', 'ملكة', 'عروض أسعار', 'event planning Saudi Arabia', 'wedding services Riyadh', 'book event vendors'],
 };

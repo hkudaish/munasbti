@@ -19,25 +19,41 @@ export async function verifyPassword(password: string, hash: string | null) {
   return !!hash && actual.length === target.length && timingSafeEqual(actual, target);
 }
 export const digest = (value: string) => createHash('sha256').update(value).digest('hex');
-export async function createSession(userId: string) {
-  const token = randomBytes(32).toString('base64url'); const expiresAt = new Date(Date.now() + 7 * 86400000);
-  await prisma.authSession.create({ data: { tokenHash: digest(token), userId, expiresAt } });
+export interface SessionMeta { ip?: string; userAgent?: string; method?: string }
+const SESSION_DAYS = 7, SESSION_MAX_DAYS = 30;
+export async function createSession(userId: string, meta: SessionMeta = {}) {
+  const token = randomBytes(32).toString('base64url'); const expiresAt = new Date(Date.now() + SESSION_DAYS * 86400000);
+  await prisma.authSession.create({ data: { tokenHash: digest(token), userId, expiresAt, ip: meta.ip?.slice(0, 64), userAgent: meta.userAgent?.slice(0, 300), method: meta.method?.slice(0, 20) } });
+  await prisma.user.update({ where: { id: userId }, data: { lastLoginAt: new Date() } });
   // Keep a person's session list short: drop expired ones and everything beyond the ten newest.
   await prisma.authSession.deleteMany({ where: { userId, expiresAt: { lte: new Date() } } });
   const stale = await prisma.authSession.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, skip: 10, select: { tokenHash: true } });
   if (stale.length) await prisma.authSession.deleteMany({ where: { tokenHash: { in: stale.map(s => s.tokenHash) } } });
   (await cookies()).set(COOKIE, token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', expires: expiresAt });
 }
+/** Request details worth keeping with a session so a person can recognise their devices. */
+export const sessionMeta = (request: Request, method: string): SessionMeta => ({ ip: clientIp(request), userAgent: request.headers.get('user-agent') || undefined, method });
+/** Sliding renewal: a session used within its last days gets a fresh week, up to 30 days after sign-in. Called from the session endpoint (a route handler, which may set cookies). */
+export async function renewSession() {
+  const token = (await cookies()).get(COOKIE)?.value; if (!token) return;
+  const row = await prisma.authSession.findUnique({ where: { tokenHash: digest(token) } });
+  if (!row || row.expiresAt <= new Date() || row.expiresAt.getTime() - Date.now() > 3 * 86400000) return;
+  const expiresAt = new Date(Math.min(Date.now() + SESSION_DAYS * 86400000, row.createdAt.getTime() + SESSION_MAX_DAYS * 86400000));
+  if (expiresAt <= row.expiresAt) return;
+  await prisma.authSession.update({ where: { tokenHash: row.tokenHash }, data: { expiresAt, lastSeenAt: new Date() } });
+  (await cookies()).set(COOKIE, token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', expires: expiresAt });
+}
+export async function currentSessionHash() { const token = (await cookies()).get(COOKIE)?.value; return token ? digest(token) : null; }
 export async function sessionUser() {
   const token = (await cookies()).get(COOKIE)?.value;
   if (!token) return null;
   const session = await prisma.authSession.findUnique({ where: { tokenHash: digest(token) }, include: { user: { include: { vendorProfile: true } } } });
-  return session && session.user.isActive && session.expiresAt > new Date() ? session.user : null;
+  return session && session.user.isActive && session.user.approvalStatus !== 'REJECTED' && session.expiresAt > new Date() ? session.user : null;
 }
 export async function requireUser() { const user = await sessionUser(); if (!user) throw new HttpError(401, 'يرجى تسجيل الدخول'); return user; }
 export async function logout() { const token = (await cookies()).get(COOKIE)?.value; if (token) await prisma.authSession.deleteMany({ where: { tokenHash: digest(token) } }); (await cookies()).delete(COOKIE); }
 export function profile(user: any) {
-  return { id: user.id, name: user.name, phone: user.phone, email: user.email, emailVerified: !!user.emailVerifiedAt, cityId: user.cityId, createdAt: user.createdAt, avatar: user.avatar, role: ['ADMIN','SUPER_ADMIN'].includes(user.role) ? 'admin' : user.role === 'VENDOR' ? 'vendor' : 'client', hasSystemAccess: user.role === 'SUPER_ADMIN', hasAdminAccess: ['ADMIN','SUPER_ADMIN'].includes(user.role), vendorId: user.vendorProfile?.id, businessName: user.vendorProfile?.businessName };
+  return { id: user.id, name: user.name, phone: user.phone, email: user.email, emailVerified: !!user.emailVerifiedAt, phoneVerified: !!user.phoneVerifiedAt, cityId: user.cityId, createdAt: user.createdAt, avatar: user.avatar, role: ['ADMIN','SUPER_ADMIN'].includes(user.role) ? 'admin' : user.role === 'VENDOR' ? 'vendor' : 'client', hasSystemAccess: user.role === 'SUPER_ADMIN', hasAdminAccess: ['ADMIN','SUPER_ADMIN'].includes(user.role), vendorId: user.vendorProfile?.id, businessName: user.vendorProfile?.businessName };
 }
 /**
  * The visitor's address, read only from a header the hosting layer controls:

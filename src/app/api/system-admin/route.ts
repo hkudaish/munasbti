@@ -4,6 +4,7 @@ import { hashPassword, requireSystemAdmin } from '@/lib/server/auth';
 import { FEATURE_CATALOG } from '@/lib/system/feature-catalog';
 import { featureStates } from '@/lib/server/features';
 import { contact, role, systemMutation, userSelect } from '@/lib/server/system-admin';
+import { assignLegacyRole } from '@/lib/server/rbac';
 export const dynamic = 'force-dynamic';
 export const GET = api(async request => {
   await requireSystemAdmin(); const url = new URL(request.url); const q = (url.searchParams.get('q') || '').slice(0,120);
@@ -33,6 +34,7 @@ export const POST = api(async request => {
     const data = contact(d); const passwordHash = await hashPassword(d.password); const newRole = role(d.role);
     const user = await systemMutation(actor.id, async tx => {
       const created = await tx.user.create({ data: { ...data, passwordHash, role: newRole, cityId: text(d.cityId, 80) || null } });
+      await assignLegacyRole(tx, created.id, newRole, actor.id);
       await tx.systemAuditLog.create({ data: { actorId: actor.id, action: 'USER_CREATED', targetId: created.id, details: { role: newRole } } }); return { id: created.id };
     }); return { success: true, user };
   }
@@ -46,6 +48,7 @@ export const POST = api(async request => {
       if (target.role === 'SUPER_ADMIN' && target.isActive && (!d.isActive || nextRole !== 'SUPER_ADMIN') && await tx.user.count({ where: { role: 'SUPER_ADMIN', isActive: true } }) <= 1) throw new HttpError(409, 'يجب الإبقاء على مدير نظام واحد نشط على الأقل');
       const changed = await tx.user.updateMany({ where: { id, updatedAt: stamp }, data: { ...data, role: nextRole, isActive: d.isActive, ...(passwordHash ? { passwordHash } : {}) } });
       if (!changed.count) throw new HttpError(409, 'تم تعديل الحساب؛ أعد تحميل البيانات');
+      if (nextRole !== target.role) await assignLegacyRole(tx, id, nextRole, actor.id);
       if (passwordHash || !d.isActive || nextRole !== target.role) await tx.authSession.deleteMany({ where: { userId: id } });
       await tx.systemAuditLog.create({ data: { actorId: actor.id, action: 'USER_UPDATED', targetId: id, details: { role: nextRole, isActive: d.isActive, passwordReset: !!passwordHash } } });
     }); return { success: true };

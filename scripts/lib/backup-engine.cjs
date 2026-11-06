@@ -23,7 +23,7 @@ const zlib = require('node:zlib');
 const { createHash, createCipheriv, createDecipheriv, randomBytes } = require('node:crypto');
 
 // Sessions and rate-limit counters are never backed up: restoring them would revive revoked logins.
-const DEFAULT_EXCLUDE = ['AuthSession', 'AuthAttempt', 'SystemSetupToken'];
+const DEFAULT_EXCLUDE = ['AuthSession', 'AuthAttempt', 'SystemSetupToken', 'AccountToken', 'VerificationCode', 'OAuthState'];   // short-lived credentials are never restored from a backup
 // The administration audit trail is never rolled back by a restore: otherwise a restore could erase the record of what
 // happened since the backup (including the restore itself). Rows from the backup are only added where missing.
 const DEFAULT_PRESERVE = ['SystemAuditLog', 'AvailabilityAuditLog'];

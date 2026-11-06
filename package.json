@@ -1,5 +1,5 @@
 {
-  "name": "munasabati-saudi-events-platform",
+  "name": "munasbti",
   "version": "1.1.0",
   "private": true,
   "scripts": {
@@ -31,6 +31,7 @@
     "test:login-lockout": "node scripts/test-login-lockout.cjs",
     "test:totp": "node scripts/test-totp.cjs",
     "test:account-security": "node scripts/test-account-security.cjs",
+    "test:rbac": "node scripts/test-rbac.cjs",
     "test:demo-data": "node scripts/test-demo-data.cjs",
     "test:backup": "node scripts/test-backup.cjs",
     "test:backup-admin": "node scripts/test-backup-admin.cjs",

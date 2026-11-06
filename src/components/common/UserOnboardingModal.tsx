@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Turnstile, { captchaConfigured } from '@/components/common/Turnstile';
 import PasswordInput from '@/components/common/PasswordInput';
+import AlternativeSignIn, { useSignInMethods } from '@/components/common/AlternativeSignIn';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/store';
 import {
@@ -103,6 +104,18 @@ export default function UserOnboardingModal() {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { if (lockedUntil <= Date.now()) return; const t = setInterval(() => { const n = Date.now(); setNow(n); if (n >= lockedUntil) { setLockedUntil(0); setErrorMessage(''); } }, 1000); return () => clearInterval(t); }, [lockedUntil]);
   const lockSeconds = lockedUntil > now ? Math.ceil((lockedUntil - now) / 1000) : 0;
+
+  // Which sign-in methods the administrator enabled (password only until the answer arrives).
+  const signIn = useSignInMethods();
+  const passwordOn = signIn?.methods.password !== false;
+  // Coming back from Google / Apple with a problem: reopen the sign-in step and say what happened.
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get('auth_error'); if (!code) return;
+    const messages: Record<string, string> = { cancelled: 'تم إلغاء الدخول.', mfa: 'هذا الحساب محمي بتطبيق مصادقة؛ سجّل الدخول بكلمة المرور أو برمز التحقق ثم أدخل رمز التطبيق.', disabled: 'هذا الحساب معطل؛ تواصل مع الإدارة.', rate: 'محاولات كثيرة؛ حاول بعد قليل.', profile: 'لم يكتمل إنشاء الحساب؛ حاول مرة أخرى.', unavailable: 'طريقة الدخول هذه غير متاحة حالياً.', failed: 'تعذر تسجيل الدخول؛ حاول مرة أخرى.' };
+    const url = new URL(window.location.href); url.searchParams.delete('auth_error'); window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+    setOnboardingInitialRole(null); setIsOnboardingOpen(true); setStep('login'); setErrorMessage(tr(messages[code] || messages.failed));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Sync initial role when modal opens
   useEffect(() => {
@@ -764,6 +777,7 @@ export default function UserOnboardingModal() {
                 <span>{tr('العودة لاختيار نوع الحساب')}</span>
               </button>
 
+              {passwordOn && (
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -838,6 +852,8 @@ export default function UserOnboardingModal() {
                     : isSubmitting ? tr('جاري التحقق...') : tr('تسجيل الدخول')}
                 </button>
               </form>
+              )}
+              {signIn && <AlternativeSignIn methods={signIn.methods} roles={signIn.roles} onError={setErrorMessage} />}
             </div>
           )}
 

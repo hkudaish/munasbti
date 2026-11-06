@@ -29,13 +29,13 @@ const nextConfig = {
   async headers() {
     // Pages behind a sign-in are never stored by the browser or its back/forward cache, so Back after
     // a sign-out cannot show a stale dashboard.
-    const protectedPaths = ['/reset-password', '/verify-email', '/forgot-password', '/admin', '/system-admin', '/bookings', '/occasion', '/settings', '/reception-screen', '/scan', '/commerce/orders', '/commerce/manage', '/vendor/catalog', '/vendor/orders'];
+    const protectedPaths = ['/reset-password', '/verify-email', '/forgot-password', '/admin', '/system-admin', '/access', '/bookings', '/occasion', '/settings', '/reception-screen', '/scan', '/commerce/orders', '/commerce/manage', '/vendor/catalog', '/vendor/orders'];
     const noStore = [
       { source: '/vendor', headers: [{ key: 'Cache-Control', value: 'no-store, max-age=0' }] },
       ...protectedPaths.flatMap(path => [path, path + '/:path*']).map(source => ({ source, headers: [{ key: 'Cache-Control', value: 'no-store, max-age=0' }] })),
     ];
     // A second layer besides robots.txt and the page's own robots tag: private areas are never indexed, even when someone links to them.
-    const privateAreas = ['/reset-password', '/verify-email', '/forgot-password', '/admin', '/system-admin', '/system-setup', '/vendor', '/cart', '/checkout', '/commerce/cart', '/commerce/orders', '/commerce/manage', '/bookings', '/occasion', '/settings', '/invite', '/scan', '/reception-screen', '/coverage-preview', '/compare'];
+    const privateAreas = ['/reset-password', '/verify-email', '/forgot-password', '/admin', '/system-admin', '/access', '/system-setup', '/vendor', '/cart', '/checkout', '/commerce/cart', '/commerce/orders', '/commerce/manage', '/bookings', '/occasion', '/settings', '/invite', '/scan', '/reception-screen', '/coverage-preview', '/compare'];
     const noIndex = privateAreas.flatMap(path => [path, path + '/:path*']).map(source => ({ source, headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] }));
     return [...noStore, ...noIndex, { source: '/:path*', headers: [
       { key: 'X-Frame-Options', value: 'SAMEORIGIN' },

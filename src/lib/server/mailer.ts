@@ -5,7 +5,7 @@ import path from 'node:path';
 
 /**
  * Outgoing e-mail over SMTP (Hostinger e-mail hosting, or any provider):
- *   SMTP_HOST, SMTP_PORT (465 = TLS, 587 = STARTTLS), SMTP_USER, SMTP_PASS, MAIL_FROM ("Munasabati <no-reply@your-domain>")
+ *   SMTP_HOST, SMTP_PORT (465 = TLS, 587 = STARTTLS), SMTP_USER, SMTP_PASS, MAIL_FROM ("Munasbti <no-reply@your-domain>")
  * Outside production, MAIL_OUTBOX_DIR writes each message to a JSON file instead (used by the tests; never honoured in production).
  */
 export const mailConfigured = () => !!(process.env.SMTP_HOST && process.env.MAIL_FROM) || (process.env.NODE_ENV !== 'production' && !!process.env.MAIL_OUTBOX_DIR);

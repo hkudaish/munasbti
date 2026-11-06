@@ -1,12 +1,16 @@
 import { prisma } from '@/lib/db';
 import { api, body, text, HttpError } from '@/lib/server/http';
-import { clientIp, createSession, hashPassword, profile, rateLimit } from '@/lib/server/auth';
+import { clientIp, createSession, hashPassword, profile, rateLimit, sessionMeta } from '@/lib/server/auth';
+import { authSettings } from '@/lib/server/auth-settings';
+import { accessOf, grantInitialRole } from '@/lib/server/rbac';
+import { securityLog } from '@/lib/server/security-log';
 import { onVendorRegistered } from '@/lib/server/vendor-approval';
 import { verifyCaptcha } from '@/lib/server/captcha';
 import { sendEmailVerification } from '@/lib/server/account-security';
 export const POST = api(async request => {
   const data = await body(request, 12000);
   if (!['client', 'vendor'].includes(data.userType)) throw new HttpError(400, 'نوع الحساب غير صالح');
+  if (!(await authSettings()).passwordLogin) throw new HttpError(403, 'التسجيل بكلمة مرور غير مفعّل؛ استخدم وسيلة أخرى');
   const vendor = data.userType === 'vendor'; const input = vendor ? data.vendorData : data.customerData;
   if (!input) throw new HttpError(400, 'بيانات التسجيل مطلوبة');
   const phone = text(vendor ? input.contactPhone : input.phone, 20, true);
@@ -22,9 +26,12 @@ export const POST = api(async request => {
     const user = await tx.user.create({ data: { name: text(vendor ? input.contactName || input.businessName : input.name, 120, true), phone, email, passwordHash, role: vendor ? 'VENDOR' : 'CLIENT', cityId } });
     const created = vendor ? await tx.vendor.create({ data: { userId: user.id, businessName: text(input.businessName, 160, true), businessNameEn: text(input.businessNameEn, 160), categoryId: text(input.categoryId, 80, true), cityId, neighborhood: text(input.neighborhood, 160), logo: '', bannerImage: '', bioAr: text(input.bioAr, 4000), cancellationPolicyAr: '', contactPhone: phone, whatsappNumber: text(input.whatsappNumber || phone, 20), status: 'UNDER_REVIEW', verified: false } }) : null;
     if (created) await onVendorRegistered(tx, created);
+    // The role decides whether the account needs an administrator's approval first (editable in the roles screen).
+    await grantInitialRole(tx, user.id, vendor ? 'vendor' : 'client');
     return tx.user.findUniqueOrThrow({ where: { id: user.id }, include: { vendorProfile: true } });
   });
-  await createSession(user.id);
+  await createSession(user.id, sessionMeta(request, 'password'));
+  await securityLog('account.created', { actor: user.id, target: user.id, ip: clientIp(request), details: { via: 'password', role: vendor ? 'vendor' : 'client' } });
   void sendEmailVerification(user);   // a confirmation link when an address was given; the account works meanwhile
-  return { success: true, user: profile(user) };
+  return { success: true, user: { ...profile(user), ...await accessOf(user) } };
 });

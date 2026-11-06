@@ -25,12 +25,12 @@ sudo npm i -g pm2
 sudo ufw allow OpenSSH && sudo ufw allow 'Nginx Full' && sudo ufw enable        # 5432 stays closed
 
 # 2. Database (skip if you use an external Postgres)
-sudo -u postgres psql -c "CREATE USER munasabati WITH PASSWORD 'CHANGE-ME';" -c "CREATE DATABASE munasabati OWNER munasabati;"
-#   DATABASE_URL=postgresql://munasabati:CHANGE-ME@127.0.0.1:5432/munasabati
+sudo -u postgres psql -c "CREATE USER munasbti WITH PASSWORD 'CHANGE-ME';" -c "CREATE DATABASE munasbti OWNER munasbti;"
+#   DATABASE_URL=postgresql://munasbti:CHANGE-ME@127.0.0.1:5432/munasbti
 
 # 3. App
-sudo mkdir -p /srv/munasabati /var/backups/munasabati && sudo chown -R $USER /srv/munasabati /var/backups/munasabati
-git clone <your repo> /srv/munasabati && cd /srv/munasabati
+sudo mkdir -p /srv/munasbti /var/backups/munasbti && sudo chown -R $USER /srv/munasbti /var/backups/munasbti
+git clone <your repo> /srv/munasbti && cd /srv/munasbti
 cp .env.hostinger.example .env.production && chmod 600 .env.production && nano .env.production   # fill every value
 npm ci --legacy-peer-deps
 node scripts/migrate.cjs              # builds all tables (18 migrations, transactional, re-runnable)
@@ -43,13 +43,13 @@ node scripts/seed-base.cjs
 ACCOUNT_IDENTIFIER=your-phone-or-email node scripts/provision-system-admin.cjs      # see docs/SYSTEM_ADMIN.md
 
 # 5. nginx + HTTPS
-sudo cp deploy/hostinger/nginx.conf /etc/nginx/sites-available/munasabati   # replace your-domain.com
-sudo ln -s /etc/nginx/sites-available/munasabati /etc/nginx/sites-enabled/
-sudo certbot --nginx -d your-domain.com -d www.your-domain.com && sudo nginx -t && sudo systemctl reload nginx
+sudo cp deploy/hostinger/nginx.conf /etc/nginx/sites-available/munasbti   # replace munasbti.biz
+sudo ln -s /etc/nginx/sites-available/munasbti /etc/nginx/sites-enabled/
+sudo certbot --nginx -d munasbti.biz -d www.munasbti.biz && sudo nginx -t && sudo systemctl reload nginx
 
 # 6. Scheduled jobs
 chmod +x scripts/hostinger/cron.sh deploy/hostinger/deploy.sh
-( crontab -l 2>/dev/null; echo '*/15 * * * * /srv/munasabati/scripts/hostinger/cron.sh notifications >> /var/log/munasabati-cron.log 2>&1'; echo '7 * * * * /srv/munasabati/scripts/hostinger/cron.sh backup >> /var/log/munasabati-cron.log 2>&1' ) | crontab -
+( crontab -l 2>/dev/null; echo '*/15 * * * * /srv/munasbti/scripts/hostinger/cron.sh notifications >> /var/log/munasbti-cron.log 2>&1'; echo '7 * * * * /srv/munasbti/scripts/hostinger/cron.sh backup >> /var/log/munasbti-cron.log 2>&1' ) | crontab -
 ```
 
 Updates later: `./deploy/hostinger/deploy.sh` (pull, install, migrate, build, zero-downtime `pm2 reload`, smoke test).
@@ -59,18 +59,18 @@ Updates later: `./deploy/hostinger/deploy.sh` (pull, install, migrate, build, ze
 1. Create the database at Neon/Supabase (any region near your users); copy the connection string with `sslmode=require`. Run once from your computer: `DATABASE_URL="..." node scripts/migrate.cjs && DATABASE_URL="..." node scripts/seed-base.cjs`.
 2. In hPanel create the Node.js app from the Git repo; Node 22, build command `npm ci --legacy-peer-deps && npm run build`, start command `npm start`.
 3. Add every variable from `.env.hostinger.example` in the app's environment settings (`PORT` is supplied by the platform; set `DB_CONNECTION_LIMIT=5` on small plans; `TRUSTED_PROXY_HOPS=1`, then confirm with the check below).
-4. Cron jobs (hPanel > Cron Jobs): every 15 minutes `curl -fsS -X POST -H "x-backup-token: <BACKUP_CRON_TOKEN>" https://your-domain.com/api/internal/notifications-cron`, hourly the same for `/api/internal/backup-cron`.
-5. Backups need a writable folder outside `public_html`: set `BACKUP_STORAGE_DIR=/home/<user>/backups/munasabati` and download the folder regularly.
+4. Cron jobs (hPanel > Cron Jobs): every 15 minutes `curl -fsS -X POST -H "x-backup-token: <BACKUP_CRON_TOKEN>" https://munasbti.biz/api/internal/notifications-cron`, hourly the same for `/api/internal/backup-cron`.
+5. Backups need a writable folder outside `public_html`: set `BACKUP_STORAGE_DIR=/home/<user>/backups/munasbti` and download the folder regularly.
 
 ## After deploying: acceptance checks
 
 ```bash
-curl -fsS https://your-domain.com/api/health/live          # 200 {"status":"ok"}
-curl -fsS https://your-domain.com/api/health/db            # 200 when PostgreSQL answers, 503 when it does not
-curl -sI https://your-domain.com | grep -i strict-transport # HSTS present
+curl -fsS https://munasbti.biz/api/health/live          # 200 {"status":"ok"}
+curl -fsS https://munasbti.biz/api/health/db            # 200 when PostgreSQL answers, 503 when it does not
+curl -sI https://munasbti.biz | grep -i strict-transport # HSTS present
 # Client-address trust (must print 429s, not 401s, after the first ~40): run from your computer against YOUR domain only
-BASE=https://your-domain.com APP_ORIGIN=https://your-domain.com node scripts/load/abuse-check.mjs
-BASE=https://your-domain.com SPID= LEVELS=10,50,100 DUR=10 node scripts/load/load.mjs      # measure your plan
+BASE=https://munasbti.biz APP_ORIGIN=https://munasbti.biz node scripts/load/abuse-check.mjs
+BASE=https://munasbti.biz SPID= LEVELS=10,50,100 DUR=10 node scripts/load/load.mjs      # measure your plan
 ```
 
 If forged `X-Forwarded-For` values still defeat the login limit, `TRUSTED_PROXY_HOPS` does not match the proxies in front of the app (nginx = 1; Cloudflare + nginx = 2).
@@ -94,4 +94,4 @@ The Netlify deployment keeps working unchanged (`npm run build`); `BUILD_STANDAL
 
 ## Monitoring
 
-Uptime monitor (UptimeRobot/Better Stack) on `/api/health/live` and `/api/health/db` (alert on non-200); `pm2 monit` / `pm2 logs`; alert when memory > 80 %, 5xx > 2 %, repeated `429` on `/api/auth/*`; check `/var/log/munasabati-cron.log` for non-200 job results.
+Uptime monitor (UptimeRobot/Better Stack) on `/api/health/live` and `/api/health/db` (alert on non-200); `pm2 monit` / `pm2 logs`; alert when memory > 80 %, 5xx > 2 %, repeated `429` on `/api/auth/*`; check `/var/log/munasbti-cron.log` for non-200 job results.

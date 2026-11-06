@@ -68,12 +68,16 @@ enum AddonPricingType {
 model User {
   id            String    @id @default(uuid())
   email         String?   @unique
-  phone         String    @unique
+  phone         String?   @unique
   name          String
   role          UserRole  @default(CLIENT)
   avatar        String?
   passwordHash  String?
   emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
+  approvalStatus String   @default("ACTIVE")
+  registeredVia String    @default("password")
+  lastLoginAt   DateTime?
   isActive      Boolean   @default(true)
   cityId        String?
   createdAt     DateTime  @default(now())
@@ -85,6 +89,8 @@ model User {
   vendorProfile Vendor?
   sessions      AuthSession[]
   accountTokens AccountToken[]
+  roleAssignments UserRoleAssignment[]
+  loginIdentities LoginIdentity[]
   channelSettings ChannelSetting[]
   invitationTemplates InvitationTemplate[]
 
@@ -523,6 +529,10 @@ model AuthSession {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+  ip String?
+  userAgent String?
+  method String?
+  lastSeenAt DateTime @default(now())
   @@index([userId])
   @@index([expiresAt])
 }
@@ -1654,4 +1664,101 @@ model OfferPriceSchedule {
   createdAt          DateTime  @default(now()) @db.Timestamptz(3)
   @@index([status, effectiveFrom], map: "OfferPriceSchedule_due_idx")
   @@index([offerId], map: "OfferPriceSchedule_offerId_idx")
+}
+
+// -------------------------------------------------------------
+// Roles & permissions (RBAC), login identities, verification codes
+// -------------------------------------------------------------
+model Role {
+  id String @id
+  key String @unique
+  nameAr String
+  nameEn String @default("")
+  description String @default("")
+  active Boolean @default(true)
+  isSystem Boolean @default(false)
+  legacyRole String?
+  selfRegistration Boolean @default(false)
+  requiresApproval Boolean @default(false)
+  sortOrder Int @default(100)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  permissions RolePermission[]
+  users UserRoleAssignment[]
+}
+
+model Permission {
+  id String @id
+  code String @unique
+  groupKey String
+  nameAr String
+  nameEn String @default("")
+  sensitive Boolean @default(false)
+  roles RolePermission[]
+}
+
+model RolePermission {
+  roleId String
+  permissionId String
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+}
+
+model UserRoleAssignment {
+  userId String
+  roleId String
+  assignedBy String?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  @@id([userId, roleId])
+  @@index([roleId])
+}
+
+model LoginIdentity {
+  id String @id @default(uuid())
+  userId String
+  provider String
+  providerUserId String
+  email String?
+  verifiedAt DateTime?
+  createdAt DateTime @default(now())
+  lastUsedAt DateTime?
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerUserId])
+  @@index([userId])
+}
+
+model VerificationCode {
+  id String @id @default(uuid())
+  channel String
+  target String
+  purpose String
+  codeHash String
+  attempts Int @default(0)
+  expiresAt DateTime
+  consumedAt DateTime?
+  ip String?
+  createdAt DateTime @default(now())
+  @@index([target, channel, createdAt])
+  @@index([expiresAt])
+}
+
+model OAuthState {
+  stateHash String @id
+  provider String
+  nonce String
+  verifier String
+  bindHash String
+  roleKey String?
+  expiresAt DateTime
+  @@index([expiresAt])
+}
+
+model AuthSetting {
+  key String @id
+  value Json
+  updatedAt DateTime @default(now()) @updatedAt
 }

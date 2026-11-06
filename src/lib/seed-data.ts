@@ -2074,7 +2074,7 @@ export const INITIAL_REVIEWS: Review[] = [
 
 export const INITIAL_ADMIN_CONFIG: AdminPlatformConfig = {
   platformNameAr: 'مناسبتـي',
-  platformNameEn: 'Munasabati',
+  platformNameEn: 'Munasbti',
   taglineAr: 'خططها. احجزها. اعزمهم. احتفل.',
   commissionRatePercent: 10,
   vatPercent: 15,

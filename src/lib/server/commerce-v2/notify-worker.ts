@@ -215,5 +215,6 @@ export async function runCron() {
   // retention: rate-limit counters and sessions are useless once expired, and nothing else deletes them (they grow with every visitor)
   const purged = await Promise.all([prisma.authAttempt.deleteMany({ where: { expiresAt: { lte: new Date() } } }), prisma.authSession.deleteMany({ where: { expiresAt: { lte: new Date() } } }), prisma.accountToken.deleteMany({ where: { expiresAt: { lte: new Date(Date.now() - 86400000) } } })])
     .then(([attempts, sessions, tokens]) => ({ attempts: attempts.count, sessions: sessions.count, tokens: tokens.count })).catch(() => ({ attempts: 0, sessions: 0, tokens: 0 }));
-  return { schedules, releasedRedemptions: released, prices, expiredDrafts: Number(expired), reminders, ops, outbox, jobs, exceptions, purged };
+  const codes = await import('../otp').then(m => m.purgeCodes()).catch(() => ({ codes: 0, states: 0 }));   // spent sign-in codes and OAuth state
+  return { schedules, releasedRedemptions: released, prices, expiredDrafts: Number(expired), reminders, ops, outbox, jobs, exceptions, purged: { ...purged, ...codes } };
 }

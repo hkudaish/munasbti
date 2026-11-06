@@ -31,7 +31,7 @@ export async function serviceSeo(id: string, locale: Locale) {
   const title: string = (locale === 'en' && body.titleEn) || body.titleAr || id;
   const description: string = clip((locale === 'en' && body.descriptionEn) || body.descriptionAr || '', 160);
   return {
-    published: visible, title, hasEnglish: !!(body.titleEn && body.descriptionEn), description, image: httpsImage(body.images?.[0]), provider: vendorName ?? (locale === 'en' ? 'Munasabati' : 'منصة مناسبتـي'),
+    published: visible, title, hasEnglish: !!(body.titleEn && body.descriptionEn), description, image: httpsImage(body.images?.[0]), provider: vendorName ?? (locale === 'en' ? 'Munasbti' : 'منصة مناسبتـي'),
     category: locale === 'en' ? categories?.nameEn : categories?.nameAr, cities: cities.map(c => (locale === 'en' ? c.nameEn || c.nameAr : c.nameAr)),
     lowPrice: prices.length ? Math.min(...prices) / 100 : null, highPrice: prices.length ? Math.max(...prices) / 100 : null, offerCount: offers.length,
     availability: decisions.some(d => d.canBook) ? 'https://schema.org/InStock' : decisions.some(d => d.effectiveStatus === 'COMING_SOON') ? 'https://schema.org/PreOrder' : 'https://schema.org/OutOfStock',

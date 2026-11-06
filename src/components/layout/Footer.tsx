@@ -67,7 +67,7 @@ export default function Footer() {
                 <Sparkles className="w-5 h-5" />
               </div>
               <span className="text-2xl font-black font-cairo text-saudi-gold-400">
-                {locale === 'en' ? 'Munasabati' : adminConfig.platformNameAr}
+                {locale === 'en' ? 'Munasbti' : adminConfig.platformNameAr}
               </span>
             </div>
             <p className="text-xs text-gray-300 leading-relaxed max-w-sm">
@@ -80,7 +80,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-1">
                 <Mail className="w-3.5 h-3.5" />
-                <span>support@munasabati.sa</span>
+                <span>support@munasbti.biz</span>
               </div>
             </div>
           </div>
@@ -140,7 +140,7 @@ export default function Footer() {
 
         {/* Bottom copyright & payment methods badge */}
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400">
-          <p>© 2026 {locale === 'en' ? 'Munasabati' : adminConfig.platformNameAr}{t('. جميع الحقوق محفوظة في المملكة العربية السعودية 🇸🇦')}</p>
+          <p>© 2026 {locale === 'en' ? 'Munasbti' : adminConfig.platformNameAr}{t('. جميع الحقوق محفوظة في المملكة العربية السعودية 🇸🇦')}</p>
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
             <span className="bg-saudi-gold-500/20 text-saudi-gold-300 px-2 py-0.5 rounded text-caption2">{t('الأسعار تشمل ضريبة القيمة المضافة 15%')}</span>

@@ -1,4 +1,4 @@
-// Server-side Database Service for Munasabati Marketplace
+// Server-side Database Service for Munasbti Marketplace
 // Implements resilient hybrid fetching: uses PostgreSQL via Prisma when connected,
 // and gracefully falls back to optimized in-memory seed data when offline.
 

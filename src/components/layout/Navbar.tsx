@@ -279,7 +279,7 @@ function NavbarContent() {
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-black tracking-tight text-saudi-green-900 font-cairo">
-                  {locale === 'en' ? 'Munasabati' : adminConfig.platformNameAr}
+                  {locale === 'en' ? 'Munasbti' : adminConfig.platformNameAr}
                 </span>
                 <span className="text-caption2 -mt-1 text-saudi-gold-600 font-medium">
                   {t(adminConfig.taglineAr)}

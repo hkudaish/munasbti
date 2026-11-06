@@ -2,4 +2,4 @@
 export function siteUrl(): string {
   return (process.env.NEXT_PUBLIC_APP_URL || process.env.URL || 'http://localhost:3000').replace(/\/+$/, '');
 }
-export const SITE_NAME = { ar: 'مناسبتـي', en: 'Munasabati' } as const;
+export const SITE_NAME = { ar: 'مناسبتـي', en: 'Munasbti' } as const;

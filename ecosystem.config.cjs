@@ -8,7 +8,7 @@ if (fs.existsSync(file)) for (const line of fs.readFileSync(file, 'utf8').split(
 
 module.exports = {
   apps: [{
-    name: 'munasabati',
+    name: 'munasbti',
     script: '.next/standalone/server.js',
     cwd: __dirname,
     exec_mode: 'cluster',
