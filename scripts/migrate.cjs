@@ -2,7 +2,7 @@
 // Each file runs once, inside a transaction, and is recorded in "_app_migrations" with its checksum; a file edited after it was applied is reported.
 //   node scripts/migrate.cjs            apply what is pending
 //   node scripts/migrate.cjs --status   list applied / pending
-// Uses DATABASE_URL (and its ?schema= parameter, if any). Safe to run on every deploy; concurrent runs wait on an advisory lock.
+// Uses DATABASE_URL_UNPOOLED when set (Neon: the direct, non-pooler address; the advisory lock below needs a session) and otherwise DATABASE_URL (and its ?schema= parameter, if any). Safe to run on every deploy; concurrent runs wait on an advisory lock.
 const fs = require('node:fs'); const path = require('node:path'); const { createHash } = require('node:crypto');
 const { Client } = require('pg');
 
@@ -14,8 +14,9 @@ const dir = path.resolve(__dirname, '..', 'netlify', 'database', 'migrations');
 const statusOnly = process.argv.includes('--status');
 
 (async () => {
-  if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is not set');
-  const url = new URL(process.env.DATABASE_URL);
+  const databaseUrl = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
+  if (!databaseUrl) throw new Error('DATABASE_URL is not set');
+  const url = new URL(databaseUrl);
   const schema = url.searchParams.get('schema') || 'public';
   for (const key of ['schema', 'connection_limit', 'pool_timeout', 'pgbouncer']) url.searchParams.delete(key);   // Prisma-only parameters
   const client = new Client({ connectionString: url.toString(), ...(url.searchParams.get('sslmode') === 'disable' ? {} : {}) });

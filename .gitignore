@@ -80,3 +80,5 @@ scripts/.i18n-scan.json
 .pricing-browser-*/
 .*-tsconfig-*.json
 .taste-session.cjs
+.neon
+.env.neon

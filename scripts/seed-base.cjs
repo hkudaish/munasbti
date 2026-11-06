@@ -7,7 +7,8 @@ for (const file of ['.env.production', '.env']) {
   for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) { const m = line.match(/^([A-Z_]+)="?(.*?)"?$/); if (m && !process.env[m[1]]) process.env[m[1]] = m[2]; }
 }
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+// one-off admin scripts use the direct (non-pooler) address when Neon provides one
+const prisma = new PrismaClient(process.env.DATABASE_URL_UNPOOLED ? { datasourceUrl: process.env.DATABASE_URL_UNPOOLED } : undefined);
 const CITIES = [
   ['riyadh', 'الرياض', 'Riyadh', 'منطقة الرياض'], ['jeddah', 'جدة', 'Jeddah', 'منطقة مكة المكرمة'], ['dammam', 'الدمام والخبر', 'Dammam & Khobar', 'المنطقة الشرقية'],
   ['makkah', 'مكة المكرمة', 'Makkah', 'منطقة مكة المكرمة'], ['madinah', 'المدينة المنورة', 'Madinah', 'منطقة المدينة المنورة'], ['taif', 'الطائف', 'Taif', 'منطقة مكة المكرمة'],

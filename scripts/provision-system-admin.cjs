@@ -1,7 +1,8 @@
 // Local operator command; cannot be invoked by an HTTP request.
 // ACCOUNT_IDENTIFIER=... node --env-file=.env scripts/provision-system-admin.cjs
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+// one-off admin scripts use the direct (non-pooler) address when Neon provides one
+const prisma = new PrismaClient(process.env.DATABASE_URL_UNPOOLED ? { datasourceUrl: process.env.DATABASE_URL_UNPOOLED } : undefined);
 (async () => {
   if (!process.env.ACCOUNT_IDENTIFIER) throw Error('Set ACCOUNT_IDENTIFIER to an existing account phone or email.');
   await prisma.$transaction(async tx => {
