@@ -481,6 +481,7 @@ export default function UserOnboardingModal() {
 
           {/* STEP 2A: Customer Registration Form */}
           {step === 'customer_form' && (
+            <div className="space-y-4">
             <form onSubmit={handleCustomerSubmit} className="space-y-4">
               <button
                 type="button"
@@ -597,6 +598,9 @@ export default function UserOnboardingModal() {
                 </button>
               </div>
             </form>
+            {/* vendors register through the business form, so only non-vendor roles are offered here */}
+            {signIn && <AlternativeSignIn methods={signIn.methods} roles={signIn.roles.filter(r => r.key !== 'vendor')} onError={setErrorMessage} heading={tr('أو أنشئ حسابك بطريقة أخرى')} />}
+            </div>
           )}
 
           {/* STEP 2B: Supplier Registration Form */}

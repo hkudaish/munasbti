@@ -20,7 +20,7 @@ const inputClass = 'w-full text-base px-4 py-3 rounded-xl border border-gray-300
 const buttonClass = 'w-full py-3 px-4 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 font-bold text-sm text-gray-900 transition';
 
 /** Google / Apple buttons and the "phone or e-mail + code" flow. After a successful sign-in the page reloads, so every part of the app starts from the new session. */
-export default function AlternativeSignIn({ methods, roles, onError }: { methods: SignInMethods; roles: RoleOption[]; onError: (message: string) => void }) {
+export default function AlternativeSignIn({ methods, roles, onError, heading }: { methods: SignInMethods; roles: RoleOption[]; onError: (message: string) => void; heading?: string }) {
   const tr = useT();
   const [channel, setChannel] = useState<Channel>(methods.defaultChannel || methods.channels[0] || 'sms');
   const [phase, setPhase] = useState<'idle' | 'code' | 'profile' | 'totp'>('idle');
@@ -54,7 +54,7 @@ export default function AlternativeSignIn({ methods, roles, onError }: { methods
   const otp = methods.channels.length > 0;
   if (!otp && !methods.google && !methods.apple) return null;
   return <div className="space-y-3 border-t border-gray-200 pt-4">
-    <p className="text-center text-xs font-bold text-gray-500">{tr('أو سجّل الدخول بطريقة أخرى')}</p>
+    <p className="text-center text-xs font-bold text-gray-500">{heading || tr('أو سجّل الدخول بطريقة أخرى')}</p>
     {(methods.google || methods.apple) && <div className="grid gap-2 sm:grid-cols-2">
       {methods.google && <a href={oauthHref('google')} className={buttonClass + ' text-center'}>{tr('المتابعة باستخدام Google')}</a>}
       {methods.apple && <a href={oauthHref('apple')} className={buttonClass + ' text-center'}>{tr('المتابعة باستخدام Apple')}</a>}

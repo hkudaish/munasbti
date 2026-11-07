@@ -1420,6 +1420,7 @@ export const EN_COMMON: Record<string, string> = {
   "يلزم الاعتراف بزيادة السعر أولاً": "You must acknowledge the price increase first",
   "رسالة SMS": "SMS message",
   "أو سجّل الدخول بطريقة أخرى": "Or sign in another way",
+  "أو أنشئ حسابك بطريقة أخرى": "Or create your account another way",
   "المتابعة باستخدام Google": "Continue with Google",
   "المتابعة باستخدام Apple": "Continue with Apple",
   "وسيلة استلام الرمز": "How to receive the code",
