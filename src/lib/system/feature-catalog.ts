@@ -5,7 +5,7 @@ export const FEATURE_CATALOG = [
   { id: 'packages', name: 'الباقات', description: 'عرض الباقات الجاهزة', paths: ['/packages'], apiPaths: [], visible: true, enabled: true },
   { id: 'planning', name: 'تخطيط المناسبات', description: 'إنشاء المناسبات ومساحة العمل', paths: ['/plan','/occasion'], apiPaths: ['/api/occasions'], visible: true, enabled: true },
   { id: 'invitations', name: 'الدعوات وتأكيد الحضور', description: 'البطاقات وروابط الضيوف وقنوات الإرسال', paths: ['/invite'], apiPaths: ['/api/invitations','/api/invitation-studio','/api/guests'], visible: true, enabled: true },
-  { id: 'digital_cards', name: 'بطاقات ودعوات رقمية (خدمة مباشرة)', description: 'صفحة مستقلة لطلب البطاقات من الموردين وتصميمها ذاتياً دون مناسبة', paths: ['/invitations'], apiPaths: [], visible: true, enabled: true },
+  { id: 'digital_cards', name: 'بطاقات ودعوات رقمية (خدمة مباشرة)', description: 'صفحة مستقلة لطلب البطاقات من الموردين وتصميمها ذاتياً دون مناسبة', paths: ['/invitations'], apiPaths: ['/api/invitation-pricing'], visible: true, enabled: true },
   { id: 'gate_scanner', name: 'بوابة الدخول', description: 'التحقق من رموز الضيوف', paths: ['/scan'], apiPaths: [], visible: true, enabled: true },
   { id: 'reception', name: 'شاشة الاستقبال', description: 'شاشة الترحيب بالحضور', paths: ['/reception-screen'], apiPaths: [], visible: true, enabled: true },
   { id: 'calculator', name: 'حاسبة الميزانية', description: 'تقدير تكاليف المناسبة', paths: ['/calculator'], apiPaths: [], visible: true, enabled: true },

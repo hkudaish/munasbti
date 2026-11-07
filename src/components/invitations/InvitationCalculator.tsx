@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Calculator, QrCode, Users } from 'lucide-react';
 import { useT } from '@/components/i18n/LocaleProvider';
 import { formatSAR } from '@/lib/utils';
-import { COMPANION_PRICE, INVITATION_PLANS, InvitationPlanId, MAX_COMPANIONS, MAX_INVITATIONS, MIN_INVITATIONS, quoteInvitations } from '@/lib/invitations/pricing';
+import { requestJSON } from '@/lib/api-client';
+import { DEFAULT_PRICING, InvitationPlanId, InvitationPricing, quoteInvitations } from '@/lib/invitations/pricing';
 
 /** Public price estimate for sending invitations: number of invitations, plan, and companions allowed per guest. */
 export default function InvitationCalculator() {
@@ -13,7 +14,10 @@ export default function InvitationCalculator() {
   const [count, setCount] = useState(150);
   const [planId, setPlanId] = useState<InvitationPlanId>('whatsapp_qr');
   const [companions, setCompanions] = useState(1);
-  const q = quoteInvitations(planId, count, companions);
+  // The system admin sets the prices; the defaults show until they load, and stay if the request fails.
+  const [pricing, setPricing] = useState<InvitationPricing>(DEFAULT_PRICING);
+  useEffect(() => { let live = true; requestJSON('/api/invitation-pricing').then(r => { if (live && r?.pricing) setPricing(r.pricing); }).catch(() => {}); return () => { live = false; }; }, []);
+  const q = quoteInvitations(planId, count, companions, pricing);
 
   return (
     <section aria-label={t('حاسبة تكلفة الدعوات')} className="rounded-3xl border border-saudi-sand-300 bg-white p-5 sm:p-8 space-y-6">
@@ -26,15 +30,15 @@ export default function InvitationCalculator() {
         <div className="space-y-6">
           <div className="space-y-2">
             <label htmlFor="inv-count" className="flex items-center justify-between text-sm font-bold"><span>{t('عدد الدعوات')}</span>
-              <input aria-label={t('عدد الدعوات')} type="number" min={MIN_INVITATIONS} max={MAX_INVITATIONS} value={count} onChange={e => setCount(Number(e.target.value))} className="w-24 rounded-lg border p-2 text-center" /></label>
-            <input id="inv-count" type="range" min={MIN_INVITATIONS} max={MAX_INVITATIONS} step={10} value={q.invitations} onChange={e => setCount(Number(e.target.value))} className="w-full accent-saudi-green-800" />
-            <p className="text-xs text-gray-500">{t('من')} {MIN_INVITATIONS} {t('إلى')} {MAX_INVITATIONS} {t('دعوة')}</p>
+              <input aria-label={t('عدد الدعوات')} type="number" min={pricing.minInvitations} max={pricing.maxInvitations} value={count} onChange={e => setCount(Number(e.target.value))} className="w-24 rounded-lg border p-2 text-center" /></label>
+            <input id="inv-count" type="range" min={pricing.minInvitations} max={pricing.maxInvitations} step={10} value={q.invitations} onChange={e => setCount(Number(e.target.value))} className="w-full accent-saudi-green-800" />
+            <p className="text-xs text-gray-500">{t('من')} {pricing.minInvitations} {t('إلى')} {pricing.maxInvitations} {t('دعوة')}</p>
           </div>
 
           <fieldset className="space-y-2">
             <legend className="text-sm font-bold mb-2">{t('نوع الخدمة')}</legend>
             <div className="grid gap-3 sm:grid-cols-2">
-              {INVITATION_PLANS.map(p => (
+              {pricing.plans.map(p => (
                 <label key={p.id} className={`relative cursor-pointer rounded-2xl border-2 p-4 space-y-1 transition ${planId === p.id ? 'border-saudi-green-800 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'}`}>
                   <input type="radio" name="inv-plan" value={p.id} checked={planId === p.id} onChange={() => setPlanId(p.id)} className="sr-only" />
                   <span className="flex items-center gap-2 font-bold text-sm">{p.qr && <QrCode className="w-4 h-4 text-saudi-green-800" />}{t(p.nameAr)}
@@ -49,9 +53,9 @@ export default function InvitationCalculator() {
           <div className={`space-y-2 ${q.plan.qr ? '' : 'opacity-50'}`}>
             <label htmlFor="inv-comp" className="flex items-center justify-between text-sm font-bold"><span className="flex items-center gap-2"><Users className="w-4 h-4" />{t('المرافقون المسموحون لكل ضيف')}</span>
               <select id="inv-comp" disabled={!q.plan.qr} value={q.companions} onChange={e => setCompanions(Number(e.target.value))} className="rounded-lg border p-2">
-                {Array.from({ length: MAX_COMPANIONS + 1 }, (_, i) => <option key={i} value={i}>{i === 0 ? t('الضيف وحده') : i}</option>)}
+                {Array.from({ length: pricing.maxCompanions + 1 }, (_, i) => <option key={i} value={i}>{i === 0 ? t('الضيف وحده') : i}</option>)}
               </select></label>
-            <p className="text-xs text-gray-500">{q.plan.qr ? `${formatSAR(COMPANION_PRICE)} ${t('لكل مرافق في كل دعوة')}` : t('المرافقون يُحدَّدون مع الباقات التي تتضمن رمز QR.')}</p>
+            <p className="text-xs text-gray-500">{q.plan.qr ? `${formatSAR(pricing.companionPrice)} ${t('لكل مرافق في كل دعوة')}` : t('المرافقون يُحدَّدون مع الباقات التي تتضمن رمز QR.')}</p>
           </div>
         </div>
 
