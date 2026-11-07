@@ -710,7 +710,7 @@ export default function HomePage() {
                   className="bg-white rounded-2xl border border-saudi-sand-300 overflow-hidden shadow-card flex flex-col justify-between"
                 >
                   <div className="relative h-44 w-full bg-gray-100">
-                    <img src={srv.images[0]} alt={pick(srv.titleAr, srv.titleEn)} className="w-full h-full object-cover" />
+                    <img src={srv.images[0]} alt={pick(srv.titleAr, srv.titleEn)} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                     <span className="absolute top-2.5 right-2.5 bg-saudi-green-900/80 backdrop-blur-md text-white text-caption2 font-bold px-2 py-0.5 rounded-full">
                       {t(srv.categoryNameAr)}
                     </span>

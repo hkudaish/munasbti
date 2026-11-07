@@ -27,14 +27,14 @@ import SessionBoundary from '@/components/system/SessionBoundary';
 
 const tajawal = Tajawal({
   subsets: ['arabic', 'latin'],
-  weight: ['300', '400', '500', '700', '800', '900'],
+  weight: ['400', '500', '700', '800', '900'],
   variable: '--font-tajawal',
   display: 'swap',
 });
 
 const cairo = Cairo({
   subsets: ['arabic', 'latin'],
-  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  weight: ['400', '500', '600', '700', '900'],
   variable: '--font-cairo',
   display: 'swap',
 });

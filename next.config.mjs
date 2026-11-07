@@ -37,7 +37,13 @@ const nextConfig = {
     // A second layer besides robots.txt and the page's own robots tag: private areas are never indexed, even when someone links to them.
     const privateAreas = ['/reset-password', '/verify-email', '/forgot-password', '/admin', '/system-admin', '/access', '/system-setup', '/vendor', '/cart', '/checkout', '/commerce/cart', '/commerce/orders', '/commerce/manage', '/bookings', '/occasion', '/settings', '/invite', '/scan', '/reception-screen', '/coverage-preview', '/compare'];
     const noIndex = privateAreas.flatMap(path => [path, path + '/:path*']).map(source => ({ source, headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] }));
-    return [...noStore, ...noIndex, { source: '/:path*', headers: [
+    // Public static files that rarely change: the browser keeps them, so repeat visits skip the download.
+    const staticAssets = [
+      { source: '/fonts/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }] },
+      ...['/icon-32.png', '/icon-192.png', '/icon-512.png', '/icon-maskable-512.png', '/apple-touch-icon.png', '/og-default.png', '/og-default-en.png']
+        .map(source => ({ source, headers: [{ key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' }] })),
+    ];
+    return [...noStore, ...noIndex, ...staticAssets, { source: '/:path*', headers: [
       { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
       { key: 'X-Content-Type-Options', value: 'nosniff' },
       ...(isDev ? [] : [{ key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' }]),
