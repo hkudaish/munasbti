@@ -316,7 +316,7 @@ function NavbarContent() {
                     }`}
                   >
                     <QrCode className="w-4 h-4 text-saudi-green-700" />
-                    <span>{t('بطاقات ودعوات رقمية')}</span>
+                    <span>{t('بطاقات ودعوات')}</span>
                   </Link>
                   <Link
                     href="/packages"

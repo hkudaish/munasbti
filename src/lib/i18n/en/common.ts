@@ -1468,6 +1468,7 @@ export const EN_COMMON: Record<string, string> = {
   "رقم المستلم غير صالح": "The phone number is not valid",
   "قناة التحقق غير متاحة حالياً": "The verification channel is not available right now",
   "بطاقات ودعوات رقمية": "Digital cards and invitations",
+  "بطاقات ودعوات": "Cards & invitations",
   "خدمة مباشرة": "Direct service",
   "اطلب تصميم بطاقتك من موردين معتمدين أو صمّمها بنفسك. لا تحتاج إلى إنشاء مناسبة أو اختيارها أولاً.": "Order your card from approved vendors or design it yourself. You do not need to create or pick an occasion first.",
   "اطلب تصميم بطاقتك من موردين معتمدين أو صمّمها بنفسك، دون الحاجة إلى اختيار مناسبة أولاً.": "Order your card from approved vendors or design it yourself, with no need to pick an occasion first.",
