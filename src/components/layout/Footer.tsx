@@ -80,7 +80,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-1">
                 <Mail className="w-3.5 h-3.5" />
-                <span>support@munasbti.biz</span>
+                <span>info@munasbti.biz</span>
               </div>
             </div>
           </div>

@@ -12,7 +12,7 @@ Everything below was verified on a production standalone build against a databas
 ## 0. Before you start
 
 1. A domain pointing at the server (A record), and an e-mail mailbox (Hostinger e-mail: `smtp.hostinger.com`, port 465) for password-reset mail.
-2. Generate secrets (run four times, one per variable) and **store a copy outside the server** (password manager): `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`
+2. Generate secrets (hex, one per variable; **except `BACKUP_ENCRYPTION_KEY`, which must be base64: use `node scripts/backup.cjs keygen`**) and **store a copy outside the server** (password manager): `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`
 3. Optional but recommended: a free Cloudflare Turnstile site (site key + secret key) for the CAPTCHA.
 
 ## A. VPS
@@ -58,7 +58,7 @@ Updates later: `./deploy/hostinger/deploy.sh` (pull, install, migrate, build, ze
 
 1. Create the database at Neon/Supabase (any region near your users); copy the connection string with `sslmode=require`. Run once from your computer: `DATABASE_URL="..." node scripts/migrate.cjs && DATABASE_URL="..." node scripts/seed-base.cjs`.
 2. In hPanel create the Node.js app from the Git repo; Node 22, build command `npm ci --legacy-peer-deps && npm run build`, start command `npm start`.
-3. Add every variable from `.env.hostinger.example` in the app's environment settings (`PORT` is supplied by the platform; set `DB_CONNECTION_LIMIT=5` on small plans; `TRUSTED_PROXY_HOPS=1`, then confirm with the check below).
+3. Add every variable from `.env.hostinger.example` in the app's environment settings (`PORT` is supplied by the platform; set `DB_CONNECTION_LIMIT=5` on small plans; `TRUSTED_PROXY_HOPS=1`, then confirm with the check below). **Do not set `NODE_ENV` there**: the builder loads these variables before `npm install`, so `NODE_ENV=production` makes npm skip the development packages (Tailwind, TypeScript) that `next build` needs, and the build fails with `Cannot find module 'tailwindcss'`. Next.js sets production mode itself. For a Neon database use the pooled address as `DATABASE_URL` and the direct one as `DATABASE_URL_UNPOOLED`.
 4. Cron jobs (hPanel > Cron Jobs): every 15 minutes `curl -fsS -X POST -H "x-backup-token: <BACKUP_CRON_TOKEN>" https://munasbti.biz/api/internal/notifications-cron`, hourly the same for `/api/internal/backup-cron`.
 5. Backups need a writable folder outside `public_html`: set `BACKUP_STORAGE_DIR=/home/<user>/backups/munasbti` and download the folder regularly.
 
