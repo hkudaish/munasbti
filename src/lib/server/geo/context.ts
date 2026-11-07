@@ -33,7 +33,7 @@ export async function previewContext(id:string):Promise<GeoContextData>{
  return makeContext(snapshot,{cityId:preview.cityId,countryCode:preview.countryCode,source:'PREVIEW'},{id,visitorType:preview.visitorType});
 }
 export function makeContext(snapshot:GeoSnapshot,location:GeoSelection,preview?:GeoContextData['preview']):GeoContextData {
- const rows=availability(snapshot,location);return {snapshot,selection:location,availability:rows,summary:summary(snapshot,location,rows),preview,reverseConfigured:!!process.env.GEOAPIFY_API_KEY};
+ const rows=availability(snapshot,location);return {snapshot,selection:location,availability:rows,summary:summary(snapshot,location,rows),preview,reverseConfigured:!!process.env.GEOAPIFY_API_KEY||snapshot.cities.some(c=>typeof c.latitude==='number'&&typeof c.longitude==='number')};
 }
 // Page layouts render on every request; share the (visitor-independent) snapshot for a few seconds.
 // APIs and admin screens keep reading fresh data. Disabled outside production so tests see their own writes.

@@ -231,6 +231,9 @@ model SaudiCity {
   region GeoRegion? @relation(fields: [regionId], references: [id])
   aliases String[] @default([])
   externalId String? @unique
+  // city centre, used to match a visitor's position to the nearest covered city and to find nearby cities
+  latitude Float?
+  longitude Float?
   defaultAvailable Boolean @default(false)
   version Int @default(1)
   updatedAt DateTime @updatedAt

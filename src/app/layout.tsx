@@ -13,6 +13,7 @@ import { featureStatesForLayout } from '@/lib/server/features';
 import { defaultFeatures } from '@/lib/system/feature-catalog';
 import GeoProvider from '@/components/geo/GeoProvider';
 import CoverageNotice from '@/components/geo/CoverageNotice';
+import LocationPrompt from '@/components/geo/LocationPrompt';
 import SiteChrome from '@/components/geo/SiteChrome';
 import { geoContext } from '@/lib/server/geo/context';
 import Navbar from '@/components/layout/Navbar';
@@ -71,7 +72,7 @@ export default async function RootLayout({
         ]} />}
         <LocaleProvider locale={locale} dictionary={locale === 'en' ? EN : undefined}>
         <GeoProvider initial={location}><FeatureProvider initial={features}><AppProvider>
-          <SiteChrome><Navbar /><CoverageNotice /></SiteChrome>
+          <SiteChrome><Navbar /><CoverageNotice /><LocationPrompt /></SiteChrome>
           <main className="flex-1">
             <SessionBoundary>{children}</SessionBoundary>
           </main>

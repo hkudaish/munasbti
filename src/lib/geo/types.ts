@@ -1,6 +1,6 @@
 export type GeoStatus = 'AVAILABLE'|'UNAVAILABLE'|'SOON';
 export interface Country { code:string; nameAr:string; nameEn:string; aliases:string[]; enabled:boolean; version:number }
-export interface City { id:string; nameAr:string; nameEn:string; regionAr:string; regionEn?:string; regionId?:string|null; countryCode:string|null; aliases:string[]; isAvailable:boolean; defaultAvailable:boolean; version:number; externalId?:string|null }
+export interface City { id:string; nameAr:string; nameEn:string; regionAr:string; regionEn?:string; regionId?:string|null; countryCode:string|null; aliases:string[]; isAvailable:boolean; defaultAvailable:boolean; version:number; externalId?:string|null; latitude?:number|null; longitude?:number|null }
 export interface GeoService { key:string; id:string; name:string; kind:'feature'|'category'|'item'; enabled:boolean; visible:boolean; cityId?:string; vendorId?:string; categoryId?:string }
 export interface Rule { cityId:string; key:string; status:GeoStatus; startsAt?:string|null; endsAt?:string|null; reason?:string|null; message?:string|null }
 export interface Policy { unknownCity:'PROMPT'|'DENY'|'ALLOW'; hideUnavailable:boolean; analyticsEnabled:boolean; reverseEnabled:boolean; ipEnabled:boolean }

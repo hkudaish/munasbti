@@ -45,6 +45,7 @@
     "test:channels": "node scripts/test-channel-providers.cjs",
     "test:system-admin": "node scripts/test-system-admin.cjs",
     "test:geo-engine": "node scripts/test-geo-engine.cjs",
+    "test:geo-nearby": "node scripts/test-geo-nearby.cjs",
     "test:geography": "node scripts/test-geography.cjs",
     "test:commerce": "node scripts/test-commerce.cjs",
     "test:commerce-rules": "node scripts/test-commerce-rules.cjs",
