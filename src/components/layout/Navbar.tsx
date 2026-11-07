@@ -310,6 +310,15 @@ function NavbarContent() {
                     <span>{t('سوق الخدمات')}</span>
                   </Link>
                   <Link
+                    href="/invitations"
+                    className={`px-3 py-2 rounded-lg transition flex items-center gap-1 ${
+                      pathname.startsWith('/invitations') ? 'text-saudi-green-800 font-bold bg-saudi-green-50' : 'hover:text-saudi-green-800 hover:bg-gray-50'
+                    }`}
+                  >
+                    <QrCode className="w-4 h-4 text-saudi-green-700" />
+                    <span>{t('بطاقات ودعوات رقمية')}</span>
+                  </Link>
+                  <Link
                     href="/packages"
                     className={`px-3 py-2 rounded-lg transition flex items-center gap-1 ${
                       pathname.startsWith('/packages') ? 'text-saudi-green-800 font-bold bg-saudi-green-50' : 'hover:text-saudi-green-800 hover:bg-gray-50'

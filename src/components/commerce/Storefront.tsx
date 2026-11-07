@@ -22,11 +22,11 @@ async function draftApi(method: string, path: string, data?: unknown) {
   const response = await fetch(path, { method, credentials: 'same-origin', cache: 'no-store', headers: data === undefined ? undefined : { 'Content-Type': 'application/json' }, body: data === undefined ? undefined : JSON.stringify(data) });
   return { status: response.status, data: await response.json().catch(() => ({})) };
 }
-export default function Storefront({serviceId,packagesOnly=false}:{serviceId?:string;packagesOnly?:boolean}){
+export default function Storefront({serviceId,packagesOnly=false,initialCategory=''}:{serviceId?:string;packagesOnly?:boolean;initialCategory?:string}){
   const t = useT(); const pick = usePick();
  const geo=useGeo();const cartGate=useCartGate();const {currentUser,openOnboarding}=useApp(),[data,setData]=useState<any>(null),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false),[selection,setSelection]=useState<any>(null),[search,setSearch]=useState(''),[city,setCity]=useState(''),[budget,setBudget]=useState(''),[category,setCategory]=useState('');
  const load=useCallback(async()=>setData(await requestJSON('/api/commerce/catalog')),[]);useEffect(()=>{void load().catch(e=>setNotice(e.message));},[load]);
- useEffect(()=>{if(geo.data?.selection.cityId)setCity(geo.data.selection.cityId);},[geo.data?.selection.cityId]);useEffect(()=>{const query=new URLSearchParams(window.location.search);setCategory(query.get('categoryId')??query.get('category')??'');setSearch(query.get('q')??'');},[]);
+ useEffect(()=>{if(geo.data?.selection.cityId)setCity(geo.data.selection.cityId);},[geo.data?.selection.cityId]);useEffect(()=>{const query=new URLSearchParams(window.location.search);setCategory(query.get('categoryId')??query.get('category')??initialCategory);setSearch(query.get('q')??'');},[]);
  const selectedOffer=data?.offers.find((o:any)=>o.id===selection?.offerId),selectedService=data?.services.find((s:any)=>s.id===(selectedOffer?.serviceId??serviceId));let preview:any;try{if(selectedOffer)preview=offerPrice(selectedOffer.body,selection);}catch{}
  // the same availability decision the server will enforce, for exactly what the customer is choosing (event city, date, time, quantity)
  const live=useLiveDecision(selection?.offerId,selection?.cityId||'',selection?.date||'',selection?.time||'',selection?.quantity||1);

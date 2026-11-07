@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { api, body, HttpError, integer, text } from '@/lib/server/http';
-import { requireUser } from '@/lib/server/auth';
+import { requireUser, sessionUser } from '@/lib/server/auth';
 import { ownOccasion } from '@/lib/server/invitations';
 import { BUILTIN_TEMPLATES, validateDesign, validateTemplate } from '@/lib/invitations/catalog';
 import { LIBRARY_TEMPLATES } from '@/lib/invitations/library';
@@ -13,7 +13,14 @@ async function templates(userId: string, role: string) {
 }
 export const dynamic = 'force-dynamic';
 export const GET = api(async request => {
-  const user = await requireUser(); const id = new URL(request.url).searchParams.get('occasionId') || '';
+  const id = new URL(request.url).searchParams.get('occasionId') || '';
+  if (!id) {
+    // the direct "digital cards" service: no occasion, so no draft or guest link; a visitor still sees the library
+    const user = await sessionUser();
+    if (!user) return { records: [], draft: null, version: 0, shareOrigin: '', favorites: [] };
+    return { records: await templates(user.id, user.role), draft: null, version: 0, shareOrigin: '', favorites: (await prisma.invitationFavorite.findMany({ where: { userId: user.id } })).map(f => f.templateId) };
+  }
+  const user = await requireUser();
   const o = await ownOccasion(id, user.id);
   return { records: await templates(user.id, user.role), draft: o.invitationDraft, version: o.draftVersion, shareOrigin: o.shareOrigin, favorites: (await prisma.invitationFavorite.findMany({ where: { userId: user.id } })).map(f => f.templateId) };
 });

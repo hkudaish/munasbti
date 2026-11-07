@@ -21,6 +21,7 @@ export const PAGES: Record<string, PageMeta> = {
   '/inspiration': page(['معرض الإلهام', 'أفكار وتصاميم لمناسبتك من أعراس وحفلات تخرج وملكة وتنسيقات.'], ['Inspiration gallery', 'Ideas and designs for your event: weddings, graduations, engagements and decor.']),
   '/artists': page(['الفنانون والفرق', 'استعرض الفنانين والفرق الفنية المتاحة لحفلك.'], ['Artists and bands', 'Browse the artists and bands available for your event.']),
   '/zaffah': page(['الزفات والفنون الشعبية', 'مكتبة الزفات والفرق الشعبية ومولّد نصوص الزفة.'], ['Zaffah and folk arts', 'Zaffah and folk-arts library with a zaffah text generator.']),
+  '/invitations': page(['بطاقات ودعوات رقمية', 'اطلب تصميم بطاقة دعوتك من موردين معتمدين أو صمّمها بنفسك دون الحاجة إلى مناسبة: بطاقات زواج وتخرج وملكة وغيرها.'], ['Digital cards and invitations', 'Order your invitation card from approved vendors or design it yourself, with no occasion needed: wedding, graduation and engagement cards and more.']),
   '/rfq': page(['طلب عروض أسعار', 'اطلب عروض أسعار من عدة موردين وقارنها قبل أن تقرر.'], ['Request quotes', 'Ask several vendors for quotes and compare them before you decide.']),
 };
 /** Pages that must never appear in search results: accounts, carts, workspaces and the control panels. */
@@ -30,5 +31,5 @@ export const pageMeta = (path: string): PageMeta | undefined => PAGES[path.repla
 /** Pages listed in the sitemap, with how often they change. Services are added from the database. */
 export const SITEMAP_PAGES: { path: string; priority: number; changeFrequency: 'daily' | 'weekly' | 'monthly' }[] = [
   { path: '/', priority: 1, changeFrequency: 'daily' }, { path: '/commerce', priority: 0.9, changeFrequency: 'daily' }, { path: '/marketplace', priority: 0.8, changeFrequency: 'daily' }, { path: '/packages', priority: 0.8, changeFrequency: 'weekly' },
-  { path: '/plan', priority: 0.7, changeFrequency: 'monthly' }, { path: '/calculator', priority: 0.5, changeFrequency: 'monthly' }, { path: '/inspiration', priority: 0.5, changeFrequency: 'weekly' }, { path: '/artists', priority: 0.5, changeFrequency: 'weekly' }, { path: '/zaffah', priority: 0.5, changeFrequency: 'monthly' }, { path: '/rfq', priority: 0.5, changeFrequency: 'monthly' },
+  { path: '/plan', priority: 0.7, changeFrequency: 'monthly' }, { path: '/calculator', priority: 0.5, changeFrequency: 'monthly' }, { path: '/inspiration', priority: 0.5, changeFrequency: 'weekly' }, { path: '/artists', priority: 0.5, changeFrequency: 'weekly' }, { path: '/zaffah', priority: 0.5, changeFrequency: 'monthly' }, { path: '/rfq', priority: 0.5, changeFrequency: 'monthly' }, { path: '/invitations', priority: 0.6, changeFrequency: 'weekly' },
 ];

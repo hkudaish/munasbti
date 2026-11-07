@@ -395,6 +395,28 @@ export default function HomePage() {
             </div>
           </section>
 
+          {/* 5b. Direct service: digital cards and invitations (no occasion needed) */}
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="rounded-3xl border border-saudi-gold-400/40 bg-white p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex items-start gap-4">
+                <span className="w-12 h-12 rounded-2xl bg-saudi-green-50 text-saudi-green-800 flex items-center justify-center shrink-0"><Palette className="w-6 h-6" /></span>
+                <div className="space-y-1">
+                  <h2 className="text-xl sm:text-2xl font-black font-cairo text-saudi-green-950">{t('بطاقات ودعوات رقمية')}</h2>
+                  <p className="text-xs sm:text-sm text-gray-600 max-w-xl">{t('اطلب تصميم بطاقتك من موردين معتمدين أو صمّمها بنفسك، دون الحاجة إلى اختيار مناسبة أولاً.')}</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-3 shrink-0">
+                <Link href="/invitations" className="px-5 py-3 rounded-2xl bg-saudi-green-800 hover:bg-saudi-green-900 text-white font-bold text-xs sm:text-sm flex items-center gap-2 transition">
+                  <span>{t('استعرض البطاقات والدعوات')}</span>
+                  <ChevronLeft className="w-4 h-4" />
+                </Link>
+                <Link href="/invitations/design" className="px-5 py-3 rounded-2xl border border-gray-300 bg-white hover:bg-gray-50 font-bold text-xs sm:text-sm text-gray-900 transition">
+                  {t('صمّم بطاقتك بنفسك')}
+                </Link>
+              </div>
+            </div>
+          </section>
+
           {/* 6. Client Section: AI Planner */}
           <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="bg-saudi-green-900 rounded-3xl p-6 sm:p-10 text-white relative overflow-hidden border border-saudi-gold-500/30">

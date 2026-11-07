@@ -27,9 +27,14 @@ export default function DigitalInviteGenerator() {
   if (!activeOccasion) return null;
   return <InvitationStudio key={`${activeOccasion.id}:${currentUser?.id || 'guest'}`} />;
 }
-function InvitationStudio() {
+/** The direct service: the same studio with no occasion behind it (designs are saved to the user's own templates, not to an occasion draft). */
+export function StandaloneInvitationStudio() {
+  const { currentUser } = useApp();
+  return <InvitationStudio key={`standalone:${currentUser?.id || 'guest'}`} standalone />;
+}
+function InvitationStudio({ standalone = false }: { standalone?: boolean }) {
   const { activeOccasion, currentUser, currentRole } = useApp();
-  const occasion = activeOccasion!;
+  const occasion = standalone ? null : activeOccasion!;
   const userId = currentUser?.id || 'guest';
   const isAdmin = currentRole === 'admin' && !!(currentUser?.hasAdminAccess || currentUser?.role === 'admin');
   const canEdit = !!currentUser;
@@ -38,9 +43,9 @@ function InvitationStudio() {
   const lastSaved = useRef('');
   const [saveStatus, setSaveStatus] = useState('');
   const [conflicted, setConflicted] = useState(false);
-  const initialKind = occasionKind(occasion.occasionTypeId);
+  const initialKind: OccasionKind = occasion ? occasionKind(occasion.occasionTypeId) : 'wedding';
   const initialTemplate: InviteTemplate = LIBRARY_TEMPLATES.find(t => t.occasion === initialKind) ?? BUILTIN_TEMPLATES.find(t => t.occasion === initialKind) ?? BUILTIN_TEMPLATES[0];
-  const eventFields = (): Partial<CardDesign> => ({ title: occasion.title, date: occasion.date, hijri: hijriOf(occasion.date), time: occasion.time || '', venue: occasion.venueName || occasion.cityNameAr });
+  const eventFields = (): Partial<CardDesign> => !occasion ? {} : ({ title: occasion.title, date: occasion.date, hijri: hijriOf(occasion.date), time: occasion.time || '', venue: occasion.venueName || occasion.cityNameAr });
   const [design, setDesign] = useState<CardDesign>({ ...initialTemplate.design, ...eventFields() });
   const [activeId, setActiveId] = useState<string>(initialTemplate.id);
   const [audience, setAudience] = useState('');
@@ -67,7 +72,7 @@ function InvitationStudio() {
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
   useEffect(() => {
     let cancelled = false; setReady(false);
-    requestJSON(`/api/invitation-studio?occasionId=${encodeURIComponent(occasion.id)}`).then(data => {
+    requestJSON(occasion ? `/api/invitation-studio?occasionId=${encodeURIComponent(occasion.id)}` : '/api/invitation-studio').then(data => {
       if (cancelled) return;
       setRecords(data.records.map(validateTemplate)); setFavorites(data.favorites); draftVersion.current = data.version;
       const origin = data.shareOrigin || getInvitationOrigin(); setShareOrigin(origin); setOriginInput(origin);
@@ -81,19 +86,19 @@ function InvitationStudio() {
   }, []);
   useEffect(() => {
     const serialized = JSON.stringify({ design, shareOrigin });
-    if (!ready || !canEdit || conflicted || serialized === lastSaved.current) return;
+    if (!occasion || !ready || !canEdit || conflicted || serialized === lastSaved.current) return;
     setSaveStatus('تغييرات غير محفوظة…');
     const timer = setTimeout(() => {
       saveQueue.current = saveQueue.current.catch(() => {}).then(async () => {
         setSaveStatus('جارٍ الحفظ في قاعدة البيانات…');
         try {
-          const data = await requestJSON('/api/invitation-studio', 'POST', { action: 'draft', occasionId: occasion.id, version: draftVersion.current, design, shareOrigin });
+          const data = await requestJSON('/api/invitation-studio', 'POST', { action: 'draft', occasionId: occasion!.id, version: draftVersion.current, design, shareOrigin });
           draftVersion.current = data.version; lastSaved.current = serialized; setSaveStatus(latestDraft.current === serialized ? 'المسودة محفوظة في قاعدة البيانات' : 'تغييرات غير محفوظة…');
         } catch (error) { setSaveStatus('تعذر حفظ المسودة؛ أعد المحاولة أو صدّر نسخة'); setNotice(error instanceof Error ? error.message : 'تعذر الحفظ'); if (error instanceof Error && error.message.includes('جهاز آخر')) setConflicted(true); }
       });
     }, 800);
     return () => clearTimeout(timer);
-  }, [design, shareOrigin, ready, canEdit, conflicted, occasion.id]);
+  }, [design, shareOrigin, ready, canEdit, conflicted, occasion?.id]);
   const patch = (value: Partial<CardDesign>) => { if (canEdit) setDesign(d => ({ ...d, ...value })); };
   const commit = async (record: InviteTemplate, expectedVersion?: number) => {
     const result = await requestJSON('/api/invitation-studio', 'POST', { action: 'template', template: record, expectedVersion });
@@ -164,7 +169,7 @@ function InvitationStudio() {
   });
   let rsvpUrl = '', linkError = '';
   if (shareOrigin) {
-    try { rsvpUrl = occasion.shareCode ? `${normalizeInvitationOrigin(shareOrigin)}/invite/${occasion.shareCode}` : ''; }
+    try { rsvpUrl = occasion?.shareCode ? `${normalizeInvitationOrigin(shareOrigin)}/invite/${occasion.shareCode}` : ''; }
     catch { linkError = 'تعذر تجهيز رابط الدعوة؛ راجع طول العنوان والتاريخ والوقت والموقع.'; }
   }
   const templates: InviteTemplate[] = [...LIBRARY_TEMPLATES, ...BUILTIN_TEMPLATES, ...records];
@@ -180,7 +185,7 @@ function InvitationStudio() {
       <div><span className="text-xs text-saudi-gold-300">مساحة إبداعك</span><h3 className="text-xl font-bold mt-1">كل مناسبة تستحق دعوة تليق بها</h3><p className="text-sm text-white/80 mt-2">{LIBRARY_TEMPLATES.length + BUILTIN_TEMPLATES.length} قالباً منسّقاً · دعوات للرجال والنساء · تخصيص مرن · معاينة وتصدير</p></div><Palette className="h-10 w-10 text-saudi-gold-300" />
     </div>
     <p className="text-xs text-gray-600">التصاميم والمفضلة والدعوات محفوظة في قاعدة البيانات. رابط البطاقة العام للعرض؛ تأكيد الحضور متاح عبر رابط الضيف الشخصي من قائمة المدعوين.</p>
-    <div className="flex flex-wrap gap-4 text-xs"><span role="status">{saveStatus}</span><Link className="underline text-green-900" href="/settings/channels">إعدادات واتساب والرسائل والبريد</Link><button className="underline" onClick={() => { lastSaved.current = ''; setDesign(d => ({ ...d })); }}>إعادة محاولة حفظ المسودة</button></div>
+    <div className="flex flex-wrap gap-4 text-xs"><span role="status">{saveStatus}</span><Link className="underline text-green-900" href="/settings/channels">إعدادات واتساب والرسائل والبريد</Link>{occasion && <button className="underline" onClick={() => { lastSaved.current = ''; setDesign(d => ({ ...d })); }}>إعادة محاولة حفظ المسودة</button>}{!occasion && <span>صمّم بطاقتك ثم اضغط «حفظ» لتجدها لاحقاً في «تصاميمي». يمكنك تنزيلها أو طباعتها أو مشاركتها مباشرة.</span>}</div>
     {notice && <div role="status" aria-live="polite" className="rounded-xl border border-saudi-gold-300 bg-amber-50 p-3 text-sm">{notice}</div>}
     <section aria-label="مكتبة القوالب" className="bg-white rounded-3xl border border-gray-200 p-4 sm:p-6 space-y-4">
       <div className="flex flex-wrap justify-between gap-3">
