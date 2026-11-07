@@ -62,7 +62,8 @@
     "start:hostinger": "node .next/standalone/server.js",
     "db:migrate": "node scripts/migrate.cjs",
     "db:migrate-status": "node scripts/migrate.cjs --status",
-    "db:seed-base": "node scripts/seed-base.cjs"
+    "db:seed-base": "node scripts/seed-base.cjs",
+    "test:invitation-pricing": "node scripts/test-invitation-pricing.cjs"
   },
   "dependencies": {
     "@neon/config": "^1.12.1",

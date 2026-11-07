@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { MailCheck, Palette, Store } from 'lucide-react';
 import Storefront from '@/components/commerce/Storefront';
+import InvitationCalculator from '@/components/invitations/InvitationCalculator';
 import { useT } from '@/components/i18n/LocaleProvider';
 import { BUILTIN_TEMPLATES } from '@/lib/invitations/catalog';
 import { LIBRARY_TEMPLATES } from '@/lib/invitations/library';
@@ -31,6 +32,8 @@ export default function CardsHub() {
           <p className="text-sm text-gray-600">{count} {t('قالباً جاهزاً للتخصيص، مع رمز QR، وتنزيل وطباعة ومشاركة مباشرة.')}</p>
         </Link>
       </section>
+
+      <InvitationCalculator />
 
       <section id="vendors" aria-label={t('خدمات البطاقات من الموردين')} className="space-y-4 scroll-mt-24">
         <h2 className="text-xl font-black font-cairo text-saudi-green-950">{t('خدمات البطاقات والدعوات من الموردين')}</h2>
